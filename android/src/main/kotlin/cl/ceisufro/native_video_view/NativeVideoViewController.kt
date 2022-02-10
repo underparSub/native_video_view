@@ -105,8 +105,9 @@ class NativeVideoViewController(
             }
             "player#seekTo" -> {
                 val position: Int? = call.argument("position")
+                val positionLong : Long? = position?.toLong()
                 if (position != null)
-                    videoView?.seekTo(position)
+                    positionLong?.let { this.mediaPlayer?.seekTo(it, MediaPlayer.SEEK_CLOSEST) }
                 result.success(null)
             }
             "player#toggleSound" -> {
