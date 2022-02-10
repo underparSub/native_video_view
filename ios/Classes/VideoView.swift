@@ -150,7 +150,7 @@ class VideoView : UIView {
     
     func seekTo(positionInMillis: Int64?){
         if let pos = positionInMillis {
-            self.player?.seek(to: CMTimeMake(value:pos, timescale:1000), toleranceBefore:CMTime.zero, toleranceAfter: CMTime.zero)
+            self.player?.seek(to: CMTimeMake(value: pos, timescale: 1000), toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero)
         }
     }
     
