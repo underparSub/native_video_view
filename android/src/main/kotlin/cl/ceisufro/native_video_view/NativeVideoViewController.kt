@@ -213,8 +213,9 @@ class NativeVideoViewController(
     }
 
     override fun onCompletion(mediaPlayer: MediaPlayer?) {
-        this.mediaPlayer = null
-        stopPlayback()
+        //this.mediaPlayer = null
+        //stopPlayback()
+        pausePlayback()
         methodChannel.invokeMethod("player#onCompletion", null)
     }
 
