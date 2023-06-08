@@ -129,10 +129,11 @@ class NativeVideoViewController(
     
     override fun onResume(owner: LifecycleOwner) {
         super.onResume(owner)
-        if (!disposed && playerState == PlayerState.PAUSED) {
-            this.startPlayback()
+        if (disposed) return
+        if (playerState == PlayerState.NOT_INITIALIZED) {
+        this.mediaPlayer?.prepareAsync()
+        }
     }
-}
 
     override fun onCreate(owner: LifecycleOwner) {
         super.onCreate(owner)
