@@ -126,6 +126,13 @@ class NativeVideoViewController(
             }
         }
     }
+    
+    override fun onResume(owner: LifecycleOwner) {
+        super.onResume(owner)
+        if (!disposed && playerState == PlayerState.PAUSED) {
+            this.startPlayback()
+    }
+}
 
     override fun onCreate(owner: LifecycleOwner) {
         super.onCreate(owner)
