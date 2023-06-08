@@ -127,14 +127,18 @@ class NativeVideoViewController(
         }
     }
     
+  
     override fun onResume(owner: LifecycleOwner) {
         super.onResume(owner)
         if (disposed) return
-        if (playerState == PlayerState.NOT_INITIALIZED) {
-        this.mediaPlayer?.prepareAsync()
+        if (playerState == PlayerState.NOT_INITIALIZED && mediaPlayer != null) {
+            try {
+               this.mediaPlayer?.prepareAsync()
+         } catch (e: IllegalStateException) {
+                Log.e("NativeVideoViewController", "Error preparing media player", e)
+         }
         }
-    }
-
+     }
     override fun onCreate(owner: LifecycleOwner) {
         super.onCreate(owner)
         this.configurePlayer()
@@ -168,6 +172,8 @@ class NativeVideoViewController(
             videoView?.setAudioFocusRequest(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
         }
     }
+  
+
 
     private fun initVideo(dataSource: String?) {
         this.configurePlayer()
