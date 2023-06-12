@@ -9,6 +9,7 @@ import Foundation
 import Flutter
 import AVFoundation
 
+
 public class NativeVideoViewController: NSObject, FlutterPlatformView {
     private var viewId: Int64
     private var methodChannel: FlutterMethodChannel
@@ -111,6 +112,17 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
                     self.volume = vol
                     self.configureVolume()
                 }
+            }
+            result(nil)
+            break
+        case "magnifier#onPanUpdate":
+            let arguments = call.arguments as? [String:Any]
+            if let args = arguments {
+                let width: Double = (args["width"] as? Double) ?? 0.0
+                let height: Double = (args["height"] as? Double) ?? 0.0
+                let isShow: Bool = (args["isShow"] as? Bool) ?? false
+                let position = (args["position"] as? [Double]) ?? [0.0, 0.0]
+                self.videoView?.onPanUpdate(position: position, width: width, height: height,isShow:isShow)
             }
             result(nil)
             break
