@@ -186,6 +186,30 @@ class VideoViewController {
     }
     return false;
   }
+  
+  
+  
+    Future<bool> onPanUpdate(
+      List<double> position, double width, double height, bool isShow) async {
+    try {
+      Map<String, dynamic> args = {
+        "position": position,
+        "width": width,
+        "height": height,
+        "isShow": isShow,
+      };
+      await _channel.invokeMethod<void>("magnifier#onPanUpdate", args);
+      return true;
+    } catch (ex) {
+      debugPrint("$ex");
+    }
+    return false;
+  }
+  
+  
+  
+  
+  
 
   /// Gets the current position of time in seconds.
   /// Returns the current position of playback in milliseconds.
