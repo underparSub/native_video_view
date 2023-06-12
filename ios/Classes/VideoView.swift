@@ -11,11 +11,20 @@ import AVFoundation
 class VideoView : UIView {
     private var playerLayer: AVPlayerLayer?
     private var player: AVPlayer?
+    private var magnifiedImageView: UIImageView!
+    private var magnifiedView: UIView!
+    private var centerCircle: UIView!
     private var videoAsset: AVAsset?
     private var initialized: Bool = false
     private var onPrepared: (()-> Void)? = nil
     private var onFailed: ((String) -> Void)? = nil
     private var onCompletion: (() -> Void)? = nil
+    private var videoPath: String?
+    private var videoSize: CGSize = CGSize.zero
+    private let imageCache = NSCache<NSString, UIImage>()
+    
+    
+ 
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
@@ -39,19 +48,34 @@ class VideoView : UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         self.configureVideoLayer()
+        self.configureMagnifier()
     }
+    
+    
+    func cacheImage(_ image: UIImage, for time: CMTime) {
+        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.seconds / 1000)")
+        imageCache.setObject(image, forKey: timeKey)
+    }
+    
+    func cachedImage(for time: CMTime) -> UIImage? {
+        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.seconds / 1000)")
+        return imageCache.object(forKey: timeKey)
+    }
+    
     
     func configure(videoPath: String?, isURL: Bool){
         if !initialized {
             self.initVideoPlayer()
         }
         if let path = videoPath {
+            self.videoPath = path
             let uri: URL? = isURL ? URL(string: path) : URL(fileURLWithPath: path)
             let asset = AVAsset(url: uri!)
+            self.videoSize = getVideoSize(from: uri!) ?? CGSize.zero
             player?.replaceCurrentItem(with: AVPlayerItem(asset: asset))
             self.videoAsset = asset
             self.configureVideoLayer()
-            // Notifies when the video finishes playing.
+            self.configureMagnifier()
             NotificationCenter.default.addObserver(self, selector: #selector(onVideoCompleted(notification:)), name: .AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
         }
     }
@@ -59,12 +83,60 @@ class VideoView : UIView {
     private func configureVideoLayer(){
         playerLayer = AVPlayerLayer(player: player)
         playerLayer?.frame = bounds
-        playerLayer?.videoGravity = .resize
+        playerLayer?.videoGravity = .resizeAspect
         if let playerLayer = self.playerLayer {
             self.clearSubLayers()
             layer.addSublayer(playerLayer)
         }
     }
+    private func configureMagnifier() {
+        self.clearMagnifier()
+        
+        magnifiedView = UIView()
+        self.addSubview(magnifiedView)
+        magnifiedView.translatesAutoresizingMaskIntoConstraints = false
+        magnifiedView.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
+        magnifiedView.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
+        magnifiedView.heightAnchor.constraint(equalToConstant: 100).isActive = true
+        magnifiedView.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        magnifiedView.layer.borderColor = UIColor.white.cgColor
+        magnifiedView.layer.borderWidth = 1.0
+        magnifiedView.layer.masksToBounds =  true
+        magnifiedView.layer.cornerRadius = 50
+        
+        
+        magnifiedImageView = UIImageView()
+        self.magnifiedView.addSubview(magnifiedImageView)
+        magnifiedImageView.translatesAutoresizingMaskIntoConstraints = false
+        magnifiedImageView.backgroundColor = UIColor.black
+        magnifiedImageView.centerYAnchor.constraint(equalTo: magnifiedView.centerYAnchor).isActive = true
+        magnifiedImageView.centerXAnchor.constraint(equalTo: magnifiedView.centerXAnchor).isActive = true
+        magnifiedImageView.heightAnchor.constraint(equalToConstant: self.frame.size.height).isActive = true
+        magnifiedImageView.widthAnchor.constraint(equalToConstant: self.frame.size.width).isActive = true
+        magnifiedImageView.layer.masksToBounds  = true
+        centerCircle = UIView()
+        centerCircle.layer.borderColor = UIColor(r: 183, g: 28, b: 28).cgColor
+        centerCircle.layer.borderWidth = 3.0
+        centerCircle.layer.masksToBounds =  true
+        centerCircle.layer.cornerRadius = 24 / 2
+        self.magnifiedImageView.addSubview(centerCircle)
+        centerCircle.translatesAutoresizingMaskIntoConstraints  = false
+        centerCircle.centerYAnchor.constraint(equalTo: magnifiedImageView.centerYAnchor).isActive = true
+        centerCircle.centerXAnchor.constraint(equalTo: magnifiedImageView.centerXAnchor).isActive = true
+        centerCircle.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        centerCircle.widthAnchor.constraint(equalToConstant: 24).isActive = true
+        if magnifiedView?.isHidden == false {
+            magnifiedView?.isHidden = true
+        }
+    }
+    private func clearMagnifier() {
+        if let _ = magnifiedView{
+            self.subviews.forEach{
+                $0.removeFromSuperview()
+            }
+        }
+    }
+    
     
     private func clearSubLayers(){
         layer.sublayers?.forEach{
@@ -83,6 +155,80 @@ class VideoView : UIView {
             self.player?.play()
         }
     }
+    func onPanUpdate(position: [Double], width: Double, height: Double, isShow: Bool) {
+        let panLocation: CGPoint = CGPoint(x: position[0], y: position[1])
+        
+        if (isShow) {
+            guard let player = player else { return }
+            guard let videoUrl  = player.currentItem?.url else { return }
+            let time = player.currentTime()
+            captureFrame(from: videoUrl, at: time) { [weak self] image in
+                guard let self = self else { return }
+                guard let image = image else { return }
+                
+                let vw = videoSize.width;
+                let vh = videoSize.height;
+                let vRatio = vw / vh;
+                let viewerWidth = self.frame.width;
+                let viewerHeight = self.frame.height;
+                let  viewerRatio = viewerWidth / viewerHeight;
+                var height = viewerHeight;
+                var width = viewerHeight / vh * vw;
+                if (vRatio >= viewerRatio) {
+                    height = viewerWidth / vw * vh;
+                    width = viewerWidth;
+                }
+                let targetSize = CGSize(width: width, height: height)
+                let widthRatio  = targetSize.width  / image.size.width
+                let heightRatio = targetSize.height / image.size.height
+                let ratio = min(widthRatio, heightRatio)
+                let newSize = CGSize(width: image.size.width * ratio, height: image.size.height * ratio)
+                let rect = CGRect(x: -panLocation.x + viewerWidth / 2 , y: -panLocation.y + viewerHeight / 2, width: newSize.width, height: newSize.height)
+            
+                UIGraphicsBeginImageContextWithOptions(newSize, false, UIScreen.main.scale)
+                image.draw(in: rect)
+                let newImage = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                magnifiedImageView.contentMode = .scaleAspectFill
+                magnifiedImageView.image = newImage
+                if (magnifiedView?.isHidden == true) {
+                    magnifiedView?.isHidden = false
+                }
+            }
+        } else {
+            if (magnifiedView?.isHidden == false) {
+                magnifiedView?.isHidden = true
+            }
+        }
+    }
+    
+    func captureFrame(from videoUrl: URL, at time: CMTime, completion: @escaping (UIImage?) -> Void) {
+        if let cachedImage = cachedImage(for: time) {
+            completion(cachedImage)
+            return
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let asset = AVURLAsset(url: videoUrl)
+            let generator = AVAssetImageGenerator(asset: asset)
+            generator.requestedTimeToleranceBefore = .zero
+            generator.requestedTimeToleranceAfter = .zero
+            generator.appliesPreferredTrackTransform = true
+            
+            do {
+                let imageRef = try generator.copyCGImage(at: time, actualTime: nil)
+                let image = UIImage(cgImage: imageRef)
+                self.cacheImage(image, for: time)
+                DispatchQueue.main.async {
+                    completion(image)
+                }
+            } catch let error {
+                print("Error generating image: \(error)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            }
+        }
+    }
     
     func pause(restart:Bool){
         self.player?.pause()
@@ -98,7 +244,7 @@ class VideoView : UIView {
     func isPlaying() -> Bool{
         return self.player?.rate != 0 && self.player?.error == nil
     }
-
+    
     func setVolume(volume:Double){
         self.player?.volume = Float(volume)
     }
@@ -112,6 +258,14 @@ class VideoView : UIView {
         let currentTime = self.player?.currentItem?.currentTime()
         return self.transformCMTime(time: currentTime)
     }
+    
+    func getVideoSize(from videoUrl: URL) -> CGSize? {
+        let asset = AVURLAsset(url: videoUrl)
+        guard let track = asset.tracks(withMediaType: .video).first else { return nil }
+        let size = track.naturalSize.applying(track.preferredTransform)
+        return CGSize(width: abs(size.width), height: abs(size.height))
+    }
+    
     
     func getVideoHeight() -> Double {
         var height: Double = 0.0
@@ -216,10 +370,24 @@ class VideoView : UIView {
                     self.notifyOnFailedObserver(message: errorMessage)
                 }
                 break
-             default:
+            default:
                 print("Status unknown")
                 break
             }
         }
+    }
+}
+
+
+
+extension AVPlayerItem {
+    var url: URL? {
+        return (asset as? AVURLAsset)?.url
+    }
+}
+
+extension UIColor {
+    convenience init(r: CGFloat, g: CGFloat, b: CGFloat) {
+        self.init(red: r/255, green: g/255, blue: b/255, alpha: 1)
     }
 }
