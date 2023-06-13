@@ -12,7 +12,7 @@ import AVFoundation
 class VideoView : UIView {
     private var playerLayer: AVPlayerLayer?
     private var player: AVPlayer?
-
+    
     
     private var videoAsset: AVAsset?
     private var initialized: Bool = false
@@ -31,7 +31,7 @@ class VideoView : UIView {
         imageView.contentMode = .scaleAspectFill
         imageView.layer.masksToBounds  = true
         return imageView
-       }()
+    }()
     
     
     
@@ -43,7 +43,7 @@ class VideoView : UIView {
         view.layer.masksToBounds =  true
         view.layer.cornerRadius = 50
         return view
-       }()
+    }()
     
     private lazy var centerCircle: UIView =  {
         let view = UIView()
@@ -55,7 +55,7 @@ class VideoView : UIView {
         return view
     }()
     
- 
+    
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
@@ -110,7 +110,7 @@ class VideoView : UIView {
             player?.replaceCurrentItem(with: AVPlayerItem(asset: asset))
             self.videoAsset = asset
             self.configureVideoLayer()
-
+            
             NotificationCenter.default.addObserver(self, selector: #selector(onVideoCompleted(notification:)), name: .AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
         }
     }
@@ -132,7 +132,7 @@ class VideoView : UIView {
         magnifiedView.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
         magnifiedView.heightAnchor.constraint(equalToConstant: 100).isActive = true
         magnifiedView.widthAnchor.constraint(equalToConstant: 100).isActive = true
-                
+        
         self.magnifiedView.addSubview(magnifiedImageView)
         magnifiedImageView.centerYAnchor.constraint(equalTo: magnifiedView.centerYAnchor).isActive = true
         magnifiedImageView.centerXAnchor.constraint(equalTo: magnifiedView.centerXAnchor).isActive = true
@@ -145,9 +145,8 @@ class VideoView : UIView {
         centerCircle.centerXAnchor.constraint(equalTo: magnifiedImageView.centerXAnchor).isActive = true
         centerCircle.heightAnchor.constraint(equalToConstant: 24).isActive = true
         centerCircle.widthAnchor.constraint(equalToConstant: 24).isActive = true
-        if magnifiedView.isHidden == false {
-            magnifiedView.isHidden = true
-        }
+        magnifiedView.isHidden = true
+        
     }
     private func clearMagnifier() {
         self.subviews.forEach{
@@ -202,20 +201,19 @@ class VideoView : UIView {
                 let ratio = min(widthRatio, heightRatio)
                 let newSize = CGSize(width: image.size.width * ratio, height: image.size.height * ratio)
                 let rect = CGRect(x: -panLocation.x + viewerWidth / 2 , y: -panLocation.y + viewerHeight / 2, width: newSize.width, height: newSize.height)
-            
+                
                 UIGraphicsBeginImageContextWithOptions(newSize, false, UIScreen.main.scale)
                 image.draw(in: rect)
                 let newImage = UIGraphicsGetImageFromCurrentImageContext()
                 UIGraphicsEndImageContext()
                 strongSelf.magnifiedImageView.image = newImage
-                if (strongSelf.magnifiedView.isHidden == true) {
-                    strongSelf.magnifiedView.isHidden = false
-                }
+                strongSelf.magnifiedView.isHidden = false
+                
             }
         } else {
-            if (magnifiedView.isHidden == false) {
-                magnifiedView.isHidden = true
-            }
+            
+            magnifiedView.isHidden = true
+            
         }
     }
     
