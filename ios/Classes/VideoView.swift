@@ -28,6 +28,7 @@ class VideoView : UIView {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.backgroundColor = UIColor.black
+        imageView.contentMode = .scaleAspectFill
         imageView.layer.masksToBounds  = true
         return imageView
        }()
@@ -180,14 +181,14 @@ class VideoView : UIView {
             guard let videoUrl  = player.currentItem?.url else { return }
             let time = player.currentTime()
             captureFrame(from: videoUrl, at: time) { [weak self] image in
-                guard let self = self else { return }
+                guard let strongSelf = self else { return }
                 guard let image = image else { return }
                 
-                let vw = videoSize.width;
-                let vh = videoSize.height;
+                let vw = strongSelf.videoSize.width;
+                let vh = strongSelf.videoSize.height;
                 let vRatio = vw / vh;
-                let viewerWidth = self.frame.width;
-                let viewerHeight = self.frame.height;
+                let viewerWidth = strongSelf.frame.width;
+                let viewerHeight = strongSelf.frame.height;
                 let  viewerRatio = viewerWidth / viewerHeight;
                 var height = viewerHeight;
                 var width = viewerHeight / vh * vw;
@@ -206,10 +207,9 @@ class VideoView : UIView {
                 image.draw(in: rect)
                 let newImage = UIGraphicsGetImageFromCurrentImageContext()
                 UIGraphicsEndImageContext()
-                magnifiedImageView.contentMode = .scaleAspectFill
-                magnifiedImageView.image = newImage
-                if (magnifiedView.isHidden == true) {
-                    magnifiedView.isHidden = false
+                strongSelf.magnifiedImageView.image = newImage
+                if (strongSelf.magnifiedView.isHidden == true) {
+                    strongSelf.magnifiedView.isHidden = false
                 }
             }
         } else {
@@ -224,7 +224,8 @@ class VideoView : UIView {
             completion(cachedImage)
             return
         }
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async {  [weak self] in
+            guard let strongSelf = self else { return }
             let asset = AVURLAsset(url: videoUrl)
             let generator = AVAssetImageGenerator(asset: asset)
             generator.requestedTimeToleranceBefore = .zero
@@ -234,7 +235,7 @@ class VideoView : UIView {
             do {
                 let imageRef = try generator.copyCGImage(at: time, actualTime: nil)
                 let image = UIImage(cgImage: imageRef)
-                self.cacheImage(image, for: time)
+                strongSelf.cacheImage(image, for: time)
                 DispatchQueue.main.async {
                     completion(image)
                 }
