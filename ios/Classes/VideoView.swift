@@ -8,12 +8,12 @@
 import UIKit
 import AVFoundation
 
+
 class VideoView : UIView {
     private var playerLayer: AVPlayerLayer?
     private var player: AVPlayer?
-    private var magnifiedImageView: UIImageView?
-    private var magnifiedView: UIView?
-    private var centerCircle: UIView?
+
+    
     private var videoAsset: AVAsset?
     private var initialized: Bool = false
     private var onPrepared: (()-> Void)? = nil
@@ -23,6 +23,39 @@ class VideoView : UIView {
     private var videoSize: CGSize = CGSize.zero
     private let imageCache = NSCache<NSString, UIImage>()
     
+    
+    private lazy var magnifiedImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.backgroundColor = UIColor.black
+        imageView.layer.masksToBounds  = true
+        return imageView
+       }()
+    
+    
+    
+    private lazy var magnifiedView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.borderColor = UIColor.white.cgColor
+        view.layer.borderWidth = 1.0
+        view.layer.masksToBounds =  true
+        view.layer.cornerRadius = 50
+        return view
+       }()
+    
+    private lazy var centerCircle: UIView =  {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints  = false
+        view.layer.borderColor = UIColor(r: 183, g: 28, b: 28).cgColor
+        view.layer.borderWidth = 3.0
+        view.layer.masksToBounds =  true
+        view.layer.cornerRadius = 24 / 2
+        return view
+    }()
+    
+ 
+    
     required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
@@ -30,7 +63,10 @@ class VideoView : UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+        
     }
+    
+    
     
     deinit {
         self.removeOnFailedObserver()
@@ -60,6 +96,7 @@ class VideoView : UIView {
     }
     
     
+    
     func configure(videoPath: String?, isURL: Bool){
         if !initialized {
             self.initVideoPlayer()
@@ -72,7 +109,7 @@ class VideoView : UIView {
             player?.replaceCurrentItem(with: AVPlayerItem(asset: asset))
             self.videoAsset = asset
             self.configureVideoLayer()
-            self.configureMagnifier()
+
             NotificationCenter.default.addObserver(self, selector: #selector(onVideoCompleted(notification:)), name: .AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
         }
     }
@@ -86,52 +123,34 @@ class VideoView : UIView {
             layer.addSublayer(playerLayer)
         }
     }
+    
     private func configureMagnifier() {
         self.clearMagnifier()
+        self.addSubview(magnifiedView)
+        magnifiedView.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
+        magnifiedView.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
+        magnifiedView.heightAnchor.constraint(equalToConstant: 100).isActive = true
+        magnifiedView.widthAnchor.constraint(equalToConstant: 100).isActive = true
+                
+        self.magnifiedView.addSubview(magnifiedImageView)
+        magnifiedImageView.centerYAnchor.constraint(equalTo: magnifiedView.centerYAnchor).isActive = true
+        magnifiedImageView.centerXAnchor.constraint(equalTo: magnifiedView.centerXAnchor).isActive = true
+        magnifiedImageView.heightAnchor.constraint(equalToConstant: self.frame.size.height).isActive = true
+        magnifiedImageView.widthAnchor.constraint(equalToConstant: self.frame.size.width).isActive = true
         
-        magnifiedView = UIView()
-        self.addSubview(magnifiedView ?? UIView())
-        magnifiedView?.translatesAutoresizingMaskIntoConstraints = false
-        magnifiedView?.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
-        magnifiedView?.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
-        magnifiedView?.heightAnchor.constraint(equalToConstant: 100).isActive = true
-        magnifiedView?.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        magnifiedView?.layer.borderColor = UIColor.white.cgColor
-        magnifiedView?.layer.borderWidth = 1.0
-        magnifiedView?.layer.masksToBounds =  true
-        magnifiedView?.layer.cornerRadius = 50
         
-        
-        magnifiedImageView = UIImageView()
-        self.magnifiedView?.addSubview(magnifiedImageView ?? UIImageView())
-        magnifiedImageView?.translatesAutoresizingMaskIntoConstraints = false
-        magnifiedImageView?.backgroundColor = UIColor.black
-        magnifiedImageView?.centerYAnchor.constraint(equalTo: (magnifiedView ?? UIView()).centerYAnchor).isActive = true
-        magnifiedImageView?.centerXAnchor.constraint(equalTo: (magnifiedView ?? UIView()).centerXAnchor).isActive = true
-        magnifiedImageView?.heightAnchor.constraint(equalToConstant: self.frame.size.height).isActive = true
-        magnifiedImageView?.widthAnchor.constraint(equalToConstant: self.frame.size.width).isActive = true
-        magnifiedImageView?.layer.masksToBounds  = true
-        magnifiedImageView?.contentMode = .scaleAspectFill
-        centerCircle = UIView()
-        centerCircle?.layer.borderColor = UIColor(r: 183, g: 28, b: 28).cgColor
-        centerCircle?.layer.borderWidth = 3.0
-        centerCircle?.layer.masksToBounds =  true
-        centerCircle?.layer.cornerRadius = 24 / 2
-        self.magnifiedImageView?.addSubview(centerCircle ?? UIView())
-        centerCircle?.translatesAutoresizingMaskIntoConstraints  = false
-        centerCircle?.centerYAnchor.constraint(equalTo: (magnifiedImageView ?? UIImageView()).centerYAnchor).isActive = true
-        centerCircle?.centerXAnchor.constraint(equalTo: (magnifiedImageView ?? UIImageView()).centerXAnchor).isActive = true
-        centerCircle?.heightAnchor.constraint(equalToConstant: 24).isActive = true
-        centerCircle?.widthAnchor.constraint(equalToConstant: 24).isActive = true
-        if magnifiedView?.isHidden == false {
-            magnifiedView?.isHidden = true
+        self.magnifiedImageView.addSubview(centerCircle)
+        centerCircle.centerYAnchor.constraint(equalTo: magnifiedImageView.centerYAnchor).isActive = true
+        centerCircle.centerXAnchor.constraint(equalTo: magnifiedImageView.centerXAnchor).isActive = true
+        centerCircle.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        centerCircle.widthAnchor.constraint(equalToConstant: 24).isActive = true
+        if magnifiedView.isHidden == false {
+            magnifiedView.isHidden = true
         }
     }
     private func clearMagnifier() {
-        if let _ = magnifiedView{
-            self.subviews.forEach{
-                $0.removeFromSuperview()
-            }
+        self.subviews.forEach{
+            $0.removeFromSuperview()
         }
     }
     
@@ -187,14 +206,15 @@ class VideoView : UIView {
                 image.draw(in: rect)
                 let newImage = UIGraphicsGetImageFromCurrentImageContext()
                 UIGraphicsEndImageContext()
-                magnifiedImageView?.image = newImage
-                if (magnifiedView?.isHidden == true) {
-                    magnifiedView?.isHidden = false
+                magnifiedImageView.contentMode = .scaleAspectFill
+                magnifiedImageView.image = newImage
+                if (magnifiedView.isHidden == true) {
+                    magnifiedView.isHidden = false
                 }
             }
         } else {
-            if (magnifiedView?.isHidden == false) {
-                magnifiedView?.isHidden = true
+            if (magnifiedView.isHidden == false) {
+                magnifiedView.isHidden = true
             }
         }
     }
@@ -388,3 +408,4 @@ extension UIColor {
         self.init(red: r/255, green: g/255, blue: b/255, alpha: 1)
     }
 }
+
