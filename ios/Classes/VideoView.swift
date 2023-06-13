@@ -111,6 +111,7 @@ class VideoView : UIView {
         magnifiedImageView?.heightAnchor.constraint(equalToConstant: self.frame.size.height).isActive = true
         magnifiedImageView?.widthAnchor.constraint(equalToConstant: self.frame.size.width).isActive = true
         magnifiedImageView?.layer.masksToBounds  = true
+        magnifiedImageView?.contentMode = .scaleAspectFill
         centerCircle = UIView()
         centerCircle?.layer.borderColor = UIColor(r: 183, g: 28, b: 28).cgColor
         centerCircle?.layer.borderWidth = 3.0
@@ -186,7 +187,6 @@ class VideoView : UIView {
                 image.draw(in: rect)
                 let newImage = UIGraphicsGetImageFromCurrentImageContext()
                 UIGraphicsEndImageContext()
-                magnifiedImageView?.contentMode = .scaleAspectFill
                 magnifiedImageView?.image = newImage
                 if (magnifiedView?.isHidden == true) {
                     magnifiedView?.isHidden = false
