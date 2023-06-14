@@ -180,14 +180,14 @@ class VideoView : UIView {
             guard let videoUrl  = player.currentItem?.url else { return }
             let time = player.currentTime()
             captureFrame(from: videoUrl, at: time) { [weak self] image in
-                guard let strongSelf = self else { return }
+                
                 guard let image = image else { return }
                 
-                let vw = strongSelf.videoSize.width;
-                let vh = strongSelf.videoSize.height;
+                let vw = self?.videoSize.width ?? CGFloat.zero;
+                let vh = self?.videoSize.height ?? CGFloat.zero;
                 let vRatio = vw / vh;
-                let viewerWidth = strongSelf.frame.width;
-                let viewerHeight = strongSelf.frame.height;
+                let viewerWidth = self?.frame.width ?? CGFloat.zero;
+                let viewerHeight = self?.frame.height ?? CGFloat.zero;
                 let  viewerRatio = viewerWidth / viewerHeight;
                 var height = viewerHeight;
                 var width = viewerHeight / vh * vw;
@@ -206,8 +206,8 @@ class VideoView : UIView {
                 image.draw(in: rect)
                 let newImage = UIGraphicsGetImageFromCurrentImageContext()
                 UIGraphicsEndImageContext()
-                strongSelf.magnifiedImageView.image = newImage
-                strongSelf.magnifiedView.isHidden = false
+                self?.magnifiedImageView.image = newImage
+                self?.magnifiedView.isHidden = false
                 
             }
         } else {
@@ -223,7 +223,6 @@ class VideoView : UIView {
             return
         }
         DispatchQueue.global(qos: .userInitiated).async {  [weak self] in
-            guard let strongSelf = self else { return }
             let asset = AVURLAsset(url: videoUrl)
             let generator = AVAssetImageGenerator(asset: asset)
             generator.requestedTimeToleranceBefore = .zero
@@ -233,7 +232,7 @@ class VideoView : UIView {
             do {
                 let imageRef = try generator.copyCGImage(at: time, actualTime: nil)
                 let image = UIImage(cgImage: imageRef)
-                strongSelf.cacheImage(image, for: time)
+                self?.cacheImage(image, for: time)
                 DispatchQueue.main.async {
                     completion(image)
                 }
