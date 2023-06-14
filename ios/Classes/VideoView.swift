@@ -23,6 +23,17 @@ class VideoView : UIView {
     private var videoSize: CGSize = CGSize.zero
     private let imageCache = NSCache<NSString, UIImage>()
     
+    private func cacheImage(_ image: UIImage, for time: CMTime) {
+        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.seconds / 1000)")
+        imageCache.setObject(image, forKey: timeKey)
+    }
+    
+    private func cachedImage(for time: CMTime) -> UIImage? {
+        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.seconds / 1000)")
+        return imageCache.object(forKey: timeKey)
+    }
+    
+    
     
     private lazy var magnifiedImageView: UIImageView = {
         let imageView = UIImageView()
@@ -86,15 +97,6 @@ class VideoView : UIView {
     }
     
     
-    func cacheImage(_ image: UIImage, for time: CMTime) {
-        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.seconds / 1000)")
-        imageCache.setObject(image, forKey: timeKey)
-    }
-    
-    func cachedImage(for time: CMTime) -> UIImage? {
-        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.seconds / 1000)")
-        return imageCache.object(forKey: timeKey)
-    }
     
     
     
@@ -174,46 +176,64 @@ class VideoView : UIView {
     }
     func onPanUpdate(position: [Double], width: Double, height: Double, isShow: Bool) {
         let panLocation: CGPoint = CGPoint(x: position[0], y: position[1])
-        
         if (isShow) {
             guard let player = player else { return }
             guard let videoUrl  = player.currentItem?.url else { return }
             let time = player.currentTime()
-            captureFrame(from: videoUrl, at: time) { [weak self] image in
-                
-                guard let image = image else { return }
-                
-                let vw = self?.videoSize.width ?? CGFloat.zero;
-                let vh = self?.videoSize.height ?? CGFloat.zero;
-                let vRatio = vw / vh;
-                let viewerWidth = self?.frame.width ?? CGFloat.zero;
-                let viewerHeight = self?.frame.height ?? CGFloat.zero;
-                let  viewerRatio = viewerWidth / viewerHeight;
-                var height = viewerHeight;
-                var width = viewerHeight / vh * vw;
-                if (vRatio >= viewerRatio) {
-                    height = viewerWidth / vw * vh;
-                    width = viewerWidth;
-                }
+            let vw = self.videoSize.width
+            let vh = self.videoSize.height
+            let vRatio = vw / vh;
+            let viewerWidth = self.frame.width
+            let viewerHeight = self.frame.height
+            let  viewerRatio = viewerWidth / viewerHeight;
+            var height = viewerHeight;
+            var width = viewerHeight / vh * vw;
+            if (vRatio >= viewerRatio) {
+                height = viewerWidth / vw * vh;
+                width = viewerWidth;
+            }
+            if let cachedImage = cachedImage(for: time) {
+                let targetSize = CGSize(width: width, height: height)
+                let widthRatio  = targetSize.width  / cachedImage.size.width
+                let heightRatio = targetSize.height / cachedImage.size.height
+                let ratio = min(widthRatio, heightRatio)
+                let newSize = CGSize(width: cachedImage.size.width * ratio, height: cachedImage.size.height * ratio)
+                let rect = CGRect(x: -panLocation.x + viewerWidth / 2 , y: -panLocation.y + viewerHeight / 2, width: newSize.width, height: newSize.height)
+                UIGraphicsBeginImageContextWithOptions(newSize, false, UIScreen.main.scale)
+                cachedImage.draw(in: rect)
+                let newImage = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                self.magnifiedImageView.image = newImage
+                self.magnifiedView.isHidden = false
+                return
+            }
+            let asset = AVURLAsset(url: videoUrl)
+            let generator = AVAssetImageGenerator(asset: asset)
+            generator.requestedTimeToleranceBefore = .zero
+            generator.requestedTimeToleranceAfter = .zero
+            generator.appliesPreferredTrackTransform = true
+            do {
+                let imageRef = try generator.copyCGImage(at: time, actualTime: nil)
+                let image = UIImage(cgImage: imageRef)
+                self.cacheImage(image, for: time)
                 let targetSize = CGSize(width: width, height: height)
                 let widthRatio  = targetSize.width  / image.size.width
                 let heightRatio = targetSize.height / image.size.height
                 let ratio = min(widthRatio, heightRatio)
                 let newSize = CGSize(width: image.size.width * ratio, height: image.size.height * ratio)
                 let rect = CGRect(x: -panLocation.x + viewerWidth / 2 , y: -panLocation.y + viewerHeight / 2, width: newSize.width, height: newSize.height)
-                
                 UIGraphicsBeginImageContextWithOptions(newSize, false, UIScreen.main.scale)
                 image.draw(in: rect)
                 let newImage = UIGraphicsGetImageFromCurrentImageContext()
                 UIGraphicsEndImageContext()
-                self?.magnifiedImageView.image = newImage
-                self?.magnifiedView.isHidden = false
-                
+                self.magnifiedImageView.image = newImage
+                self.magnifiedView.isHidden = false
+            } catch let error {
+                print("Error generating image: \(error)")
+                self.magnifiedView.isHidden = true
             }
         } else {
-            
-            magnifiedView.isHidden = true
-            
+            self.magnifiedView.isHidden = true
         }
     }
     
@@ -406,4 +426,5 @@ extension UIColor {
         self.init(red: r/255, green: g/255, blue: b/255, alpha: 1)
     }
 }
+
 
