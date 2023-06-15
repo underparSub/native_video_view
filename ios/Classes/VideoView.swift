@@ -1,4 +1,4 @@
-// 시작점3
+// 시작점4
 //  VideoView.swift
 //  native_video_view
 //
@@ -353,23 +353,26 @@ class VideoView : UIView {
         return Int64(ts)
     }
     
-    func seekTo(positionInMillis: Int64?){
+    func seekTo(positionInMillis: Int64?, capture: Bool?){
         if let pos = positionInMillis {
             self.player?.seek(to: CMTimeMake(value: pos, timescale: 1000), toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero)
-            throttlingWorkItem?.cancel()
-            let newThrottlingWorkItem = DispatchWorkItem { [weak self] in
-                do {
-                    let imageRef = try self?.generator?.copyCGImage(at: CMTimeMake(value: pos, timescale: 1000), actualTime: nil)
-                    guard let imageRef = imageRef else { return }
-                    let image = UIImage(cgImage: imageRef)
-                    self?.cacheImage(image, for: CMTimeMake(value: pos, timescale: 1000))
-                } catch let error {
-                    print(error)
+            if capture == true {
+                throttlingWorkItem?.cancel()
+                let newThrottlingWorkItem = DispatchWorkItem { [weak self] in
+                    do {
+                        let imageRef = try self?.generator?.copyCGImage(at: CMTimeMake(value: pos, timescale: 1000), actualTime: nil)
+                        guard let imageRef = imageRef else { return }
+                        let image = UIImage(cgImage: imageRef)
+                        self?.cacheImage(image, for: CMTimeMake(value: pos, timescale: 1000))
+                    } catch let error {
+                        print(error)
+                    }
+                    
                 }
-                
+                throttlingWorkItem = newThrottlingWorkItem
+                DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(300), execute: newThrottlingWorkItem)
             }
-            throttlingWorkItem = newThrottlingWorkItem
-            DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(300), execute: newThrottlingWorkItem)
+           
         }
     }
     
