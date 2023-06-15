@@ -189,14 +189,12 @@ class VideoViewController {
   
   
   
-    Future<bool> onPanUpdate(
-      List<double> position, double width, double height, bool isShow) async {
+Future<bool> onPanUpdate(
+    List<double> position,
+  ) async {
     try {
       Map<String, dynamic> args = {
         "position": position,
-        "width": width,
-        "height": height,
-        "isShow": isShow,
       };
       await _channel.invokeMethod<void>("magnifier#onPanUpdate", args);
       return true;
@@ -205,7 +203,17 @@ class VideoViewController {
     }
     return false;
   }
-  
+
+  Future<bool> onPanEnd() async {
+    try {
+      await _channel.invokeMethod<void>("magnifier#onPanEnd");
+      return true;
+    } catch (ex) {
+      debugPrint("$ex");
+    }
+    return false;
+  }
+
   
   
   
