@@ -230,9 +230,9 @@ Future<bool> onPanUpdate(
   /// Must give the [position] of the specific millisecond of playback, if
   /// the [position] is bigger than the duration of source the duration
   /// of the video is used as position.
-  Future<bool> seekTo(int position) async {
+  Future<bool> seekTo(int position, {required bool capture}) async {
     try {
-      Map<String, dynamic> args = {"position": position};
+      Map<String, dynamic> args = {"position": position, "capture": capture};
       await _channel.invokeMethod<void>("player#seekTo", args);
       return true;
     } catch (ex) {
