@@ -1,14 +1,3 @@
-//
-//  NativeVideoViewController.swift
-//  Runner
-//
-//  Created by Luis Jara Castillo on 11/4/19.
-//
-
-import Foundation
-import Flutter
-import AVFoundation
-
 
 public class NativeVideoViewController: NSObject, FlutterPlatformView {
     private var viewId: Int64
@@ -118,12 +107,13 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
         case "magnifier#onPanUpdate":
             let arguments = call.arguments as? [String:Any]
             if let args = arguments {
-                let width: Double = (args["width"] as? Double) ?? 0.0
-                let height: Double = (args["height"] as? Double) ?? 0.0
-                let isShow: Bool = (args["isShow"] as? Bool) ?? false
                 let position = (args["position"] as? [Double]) ?? [0.0, 0.0]
-                self.videoView?.onPanUpdate(position: position, width: width, height: height,isShow:isShow)
+                self.videoView?.onPanUpdate(position: position)
             }
+            result(nil)
+            break
+        case "magnifier#onPanEnd":
+            self.videoView?.onPanEnd()
             result(nil)
             break
         default:
