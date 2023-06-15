@@ -1,3 +1,13 @@
+//
+//  NativeVideoViewController.swift
+//  Runner
+//
+//  Created by Luis Jara Castillo on 11/4/19.
+//
+
+import Foundation
+import Flutter
+import AVFoundation
 
 public class NativeVideoViewController: NSObject, FlutterPlatformView {
     private var viewId: Int64
