@@ -1,4 +1,4 @@
-// 시작점4
+// 시작점7 (remove cached Image)
 //  VideoView.swift
 //  native_video_view
 //
@@ -12,6 +12,7 @@ import AVFoundation
 class VideoView : UIView {
     private var playerLayer: AVPlayerLayer?
     private var player: AVPlayer?
+    private var playerItem: AVPlayerItem?
     private var videoAsset: AVAsset?
     private var initialized: Bool = false
     private var onPrepared: (()-> Void)? = nil
@@ -21,20 +22,10 @@ class VideoView : UIView {
     private var videoSize: CGSize = CGSize.zero
     private var imageProcessingWorkItem: DispatchWorkItem?
     private var throttlingWorkItem: DispatchWorkItem?
-    private let imageCache = NSCache<NSString, UIImage>()
+//    private let imageCache = NSCache<NSString, UIImage>()
     private var generator: AVAssetImageGenerator?
-    
-    
-    private func cacheImage(_ image: UIImage, for time: CMTime) {
-        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
-        imageCache.setObject(image, forKey: timeKey)
-    }
-    
-    private func cachedImage(for time: CMTime) -> UIImage? {
-        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
-        return imageCache.object(forKey: timeKey)
-    }
-    
+    private var videoOutput: AVPlayerItemVideoOutput?
+    private var context: CIContext?
     private lazy var magnifiedImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -43,8 +34,6 @@ class VideoView : UIView {
         imageView.layer.masksToBounds  = true
         return imageView
     }()
-    
-    
     private lazy var magnifiedView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -54,7 +43,6 @@ class VideoView : UIView {
         view.layer.cornerRadius = 50
         return view
     }()
-    
     private lazy var centerCircle: UIView =  {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints  = false
@@ -76,8 +64,6 @@ class VideoView : UIView {
         
     }
     
-    
-    
     deinit {
         self.removeOnFailedObserver()
         self.removeOnPreparedObserver()
@@ -94,6 +80,17 @@ class VideoView : UIView {
         self.configureMagnifier()
     }
     
+//    private func cacheImage(_ image: UIImage, for time: CMTime) {
+//        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
+//        imageCache.setObject(image, forKey: timeKey)
+//    }
+//
+//    private func cachedImage(for time: CMTime) -> UIImage? {
+//        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
+//        return imageCache.object(forKey: timeKey)
+//    }
+//
+//
     
     func configure(videoPath: String?, isURL: Bool){
         if !initialized {
@@ -105,6 +102,11 @@ class VideoView : UIView {
             let asset = AVAsset(url: uri!)
             self.videoSize = getVideoSize(from: uri!) ?? CGSize.zero
             player?.replaceCurrentItem(with: AVPlayerItem(asset: asset))
+            self.playerItem = player?.currentItem
+            let pixelBufferAttributes: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+            self.videoOutput = AVPlayerItemVideoOutput(pixelBufferAttributes: pixelBufferAttributes)
+            self.playerItem?.add(videoOutput!)
+            self.context = CIContext()
             self.videoAsset = asset
             guard let assetTrack = asset.tracks(withMediaType: .video).first else { return }
             self.generator = AVAssetImageGenerator(asset: asset)
@@ -113,7 +115,6 @@ class VideoView : UIView {
             self.generator?.appliesPreferredTrackTransform = true
             self.generator?.maximumSize = assetTrack.naturalSize
             self.configureVideoLayer()
-            
             NotificationCenter.default.addObserver(self, selector: #selector(onVideoCompleted(notification:)), name: .AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
         }
     }
@@ -180,19 +181,17 @@ class VideoView : UIView {
     func onPanEnd() {
         imageProcessingWorkItem?.cancel()
         fadeAnimation(isShow: false)
-        
     }
     
     func fadeAnimation(isShow: Bool) {
-        UIView.animate(withDuration: 0.5, animations: {
+        UIView.animate(withDuration: 0.3, animations: {
             self.magnifiedView.alpha = isShow ? 1: 0
         }, completion: {
             finished in
-            self.magnifiedView.isHidden =  isShow ? false : true
+            self.magnifiedView.isHidden =  (isShow  && self.imageProcessingWorkItem?.isCancelled == false  ) ? false : true
         })
-        
+
     }
-    
     
     
     func onPanUpdate(position: [Double]) {
@@ -211,75 +210,42 @@ class VideoView : UIView {
             height = viewerWidth / vw * vh;
             width = viewerWidth;
         }
-        if let cachedImage = cachedImage(for: time)  {
-            imageProcessingWorkItem = DispatchWorkItem { [weak self] in
-                let targetSize = CGSize(width: width, height: height)
-                let widthRatio  = targetSize.width  / cachedImage.size.width
-                let heightRatio = targetSize.height / cachedImage.size.height
-                let ratio = min(widthRatio, heightRatio)
-                let newSize = CGSize(width: cachedImage.size.width * ratio, height: cachedImage.size.height * ratio)
-                let rect = CGRect(x: -panLocation.x + viewerWidth / 2 , y: -panLocation.y + viewerHeight / 2, width: newSize.width, height: newSize.height)
-                let renderer = UIGraphicsImageRenderer(size: newSize)
-                let newImage = renderer.image { ctx in
-                    cachedImage.draw(in: rect)
+        
+        imageProcessingWorkItem = DispatchWorkItem { [weak self] in
+            guard let pixelBuffer = self?.videoOutput?.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: nil) else {
+                return
+            }
+            let baseImage = CIImage(cvPixelBuffer: pixelBuffer)
+            guard let cgImage = self?.context?.createCGImage(baseImage, from: baseImage.extent) else { return }
+            let newImage = UIImage(cgImage: cgImage)
+            let targetSize = CGSize(width: width, height: height)
+            let widthRatio  = targetSize.width  / newImage.size.width
+            let heightRatio = targetSize.height / newImage.size.height
+            let ratio = min(widthRatio, heightRatio)
+            let newSize = CGSize(width: newImage.size.width * ratio, height: newImage.size.height * ratio)
+            let rect = CGRect(x: -panLocation.x + viewerWidth / 2 , y: -panLocation.y + viewerHeight / 2, width: newSize.width, height: newSize.height)
+            let renderer = UIGraphicsImageRenderer(size: newSize)
+            let image = renderer.image { ctx in
+                newImage.draw(in: rect)
+            }
+            if self?.imageProcessingWorkItem?.isCancelled == false {
+                DispatchQueue.main.async {
+                    self?.magnifiedImageView.image = image
+                    self?.fadeAnimation(isShow: true)
                 }
-                if self?.imageProcessingWorkItem?.isCancelled == false {
-                    DispatchQueue.main.async {
-                        self?.magnifiedImageView.image = newImage
-                        self?.fadeAnimation(isShow: true)
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        self?.magnifiedView.isHidden = true
-                        self?.magnifiedImageView.image = newImage
-                    }
+            } else {
+                DispatchQueue.main.async {
+                    self?.magnifiedView.isHidden = true
                 }
             }
-            if let imageProcessingWorkItem = imageProcessingWorkItem  {
-                DispatchQueue.global(qos: .userInteractive).async(execute: imageProcessingWorkItem)
-            }
-        } else {
-            do {
-                let imageRef = try generator?.copyCGImage(at: time, actualTime: nil)
-                guard let imageRef = imageRef else { return }
-                let image = UIImage(cgImage: imageRef)
-                self.cacheImage(image, for: time)
-            } catch let error {
-                print("\(error)")
-                self.magnifiedView.isHidden = true
-            }
+        }
+        if let imageProcessingWorkItem = imageProcessingWorkItem  {
+            DispatchQueue.global(qos: .userInteractive).async(execute: imageProcessingWorkItem)
         }
         
     }
     
-    func captureFrame(from videoUrl: URL, at time: CMTime, completion: @escaping (UIImage?) -> Void) {
-        if let cachedImage = cachedImage(for: time) {
-            completion(cachedImage)
-            return
-        }
-        DispatchQueue.global(qos: .userInitiated).async {  [weak self] in
-            let asset = AVURLAsset(url: videoUrl)
-            let generator = AVAssetImageGenerator(asset: asset)
-            generator.requestedTimeToleranceBefore = .zero
-            generator.requestedTimeToleranceAfter = .zero
-            generator.appliesPreferredTrackTransform = true
-            
-            do {
-                
-                let imageRef = try generator.copyCGImage(at: time, actualTime: nil)
-                let image = UIImage(cgImage: imageRef)
-                self?.cacheImage(image, for: time)
-                DispatchQueue.main.async {
-                    completion(image)
-                }
-            } catch let error {
-                print("Error generating image: \(error)")
-                DispatchQueue.main.async {
-                    completion(nil)
-                }
-            }
-        }
-    }
+   
     
     func pause(restart:Bool){
         self.player?.pause()
@@ -353,26 +319,9 @@ class VideoView : UIView {
         return Int64(ts)
     }
     
-    func seekTo(positionInMillis: Int64?, capture: Bool?){
+    func seekTo(positionInMillis: Int64?){
         if let pos = positionInMillis {
             self.player?.seek(to: CMTimeMake(value: pos, timescale: 1000), toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero)
-            if capture == true {
-                throttlingWorkItem?.cancel()
-                let newThrottlingWorkItem = DispatchWorkItem { [weak self] in
-                    do {
-                        let imageRef = try self?.generator?.copyCGImage(at: CMTimeMake(value: pos, timescale: 1000), actualTime: nil)
-                        guard let imageRef = imageRef else { return }
-                        let image = UIImage(cgImage: imageRef)
-                        self?.cacheImage(image, for: CMTimeMake(value: pos, timescale: 1000))
-                    } catch let error {
-                        print(error)
-                    }
-                    
-                }
-                throttlingWorkItem = newThrottlingWorkItem
-                DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(300), execute: newThrottlingWorkItem)
-            }
-           
         }
     }
     
@@ -459,6 +408,7 @@ extension UIColor {
         self.init(red: r/255, green: g/255, blue: b/255, alpha: 1)
     }
 }
+
 
 
 
