@@ -93,8 +93,7 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
             let arguments = call.arguments as? [String:Any]
             if let args = arguments {
                 let position: Int64? = args["position"] as? Int64
-                let capture: Bool? = args["capture"] as? Bool
-                self.videoView?.seekTo(positionInMillis: position, capture: capture)
+                self.videoView?.seekTo(positionInMillis: position)
             }
             result(nil)
             break
