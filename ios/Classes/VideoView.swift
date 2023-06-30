@@ -231,6 +231,7 @@ class VideoView : UIView {
             if self?.imageProcessingWorkItem?.isCancelled == false {
                 DispatchQueue.main.async {
                     self?.magnifiedImageView.image = image
+                    self?.magnifiedView.center = CGPoint(x: panLocation.x - 50, y: panLocation.y - 50)
                     self?.fadeAnimation(isShow: true)
                 }
             } else {
