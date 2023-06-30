@@ -46,7 +46,7 @@ class VideoView : UIView {
     private lazy var centerCircle: UIView =  {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints  = false
-        view.layer.borderColor = UIColor(r: 183, g: 28, b: 28).cgColor
+        view.layer.borderColor = UIColor(r: 159, g: 249, b: 255).cgColor
         view.layer.borderWidth = 3.0
         view.layer.masksToBounds =  true
         view.layer.cornerRadius = 24 / 2
