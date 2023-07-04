@@ -43,17 +43,17 @@ class VideoView : UIView {
         view.layer.cornerRadius = 50
         return view
     }()
-    private lazy var centerCircle: UIView =  {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints  = false
-        view.layer.borderColor = UIColor(r: 159, g: 249, b: 255).cgColor
-        view.layer.borderWidth = 3.0
-        view.layer.masksToBounds =  true
-        view.layer.cornerRadius = 24 / 2
-        return view
-    }()
-    
-    
+//    private lazy var centerCircle: UIView =  {
+//        let view = UIView()
+//        view.translatesAutoresizingMaskIntoConstraints  = false
+//        view.layer.borderColor = UIColor(r: 159, g: 249, b: 255).cgColor
+//        view.layer.borderWidth = 3.0
+//        view.layer.masksToBounds =  true
+//        view.layer.cornerRadius = 24 / 2
+//        return view
+//    }()
+//
+//
     required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
@@ -144,11 +144,11 @@ class VideoView : UIView {
         magnifiedImageView.widthAnchor.constraint(equalToConstant: self.frame.size.width).isActive = true
         
         
-        self.magnifiedImageView.addSubview(centerCircle)
-        centerCircle.centerYAnchor.constraint(equalTo: magnifiedImageView.centerYAnchor).isActive = true
-        centerCircle.centerXAnchor.constraint(equalTo: magnifiedImageView.centerXAnchor).isActive = true
-        centerCircle.heightAnchor.constraint(equalToConstant: 24).isActive = true
-        centerCircle.widthAnchor.constraint(equalToConstant: 24).isActive = true
+//        self.magnifiedImageView.addSubview(centerCircle)
+//        centerCircle.centerYAnchor.constraint(equalTo: magnifiedImageView.centerYAnchor).isActive = true
+//        centerCircle.centerXAnchor.constraint(equalTo: magnifiedImageView.centerXAnchor).isActive = true
+//        centerCircle.heightAnchor.constraint(equalToConstant: 24).isActive = true
+//        centerCircle.widthAnchor.constraint(equalToConstant: 24).isActive = true
         magnifiedView.isHidden = true
         
     }
