@@ -1,4 +1,4 @@
-// 시작점7 (remove cached Image)
+// start point 8 (remove animation)
 //  VideoView.swift
 //  native_video_view
 //
@@ -184,13 +184,7 @@ class VideoView : UIView {
     }
     
     func fadeAnimation(isShow: Bool) {
-        UIView.animate(withDuration: 0.3, animations: {
-            self.magnifiedView.alpha = isShow ? 1: 0
-        }, completion: {
-            finished in
-            self.magnifiedView.isHidden =  (isShow  && self.imageProcessingWorkItem?.isCancelled == false  ) ? false : true
-        })
-
+        self.magnifiedView.isHidden =  (isShow  && self.imageProcessingWorkItem?.isCancelled == false  ) ? false : true
     }
     
     
