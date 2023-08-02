@@ -65,12 +65,12 @@ class VideoView : UIView {
     }
     
     deinit {
+        self.player?.pause()
         self.removeOnFailedObserver()
         self.removeOnPreparedObserver()
         self.removeOnCompletionObserver()
         self.player?.removeObserver(self, forKeyPath: "status")
         NotificationCenter.default.removeObserver(self)
-        self.stop()
         self.initialized = false
     }
     
