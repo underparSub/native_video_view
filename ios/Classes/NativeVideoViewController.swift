@@ -41,6 +41,7 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
     }
     
     deinit {
+        self.videoView = nil
         self.methodChannel.setMethodCallHandler(nil)
         NotificationCenter.default.removeObserver(self)
     }
@@ -61,7 +62,10 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
                 if let path = videoPath {
                     let isUrl: Bool = sourceType == "VideoSourceType.network" ? true : false
                     self.configurePlayer()
-                    self.videoView?.configure(videoPath: path, isURL: isUrl)
+                    DispatchQueue.main.async {
+                        self.videoView?.configure(videoPath: path, isURL: isUrl)
+                    }
+                    
                 }
             }
             result(nil)
