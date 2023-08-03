@@ -41,7 +41,6 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
     }
     
     deinit {
-        self.videoView = nil
         self.methodChannel.setMethodCallHandler(nil)
         NotificationCenter.default.removeObserver(self)
     }
