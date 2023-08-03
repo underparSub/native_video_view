@@ -62,8 +62,8 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
                 if let path = videoPath {
                     let isUrl: Bool = sourceType == "VideoSourceType.network" ? true : false
                     self.configurePlayer()
-                    DispatchQueue.main.async {
-                        self.videoView?.configure(videoPath: path, isURL: isUrl)
+                    DispatchQueue.main.async  { [weak self ] in
+                        self?.videoView?.configure(videoPath: path, isURL: isUrl)
                     }
                     
                 }
