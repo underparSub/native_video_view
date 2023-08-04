@@ -76,16 +76,18 @@ class VideoViewController {
   /// The [sourceType] parameter could be [VideoSourceType.asset],
   /// [VideoSourceType.file] or [VideoSourceType.network]
   Future<void> setVideoSource(
-    String source, {
+    String source,
+    int videoType,
+    {
     VideoSourceType sourceType = VideoSourceType.file,
     bool? requestAudioFocus,
   }) async {
     requestAudioFocus = requestAudioFocus ?? false;
     if (sourceType == VideoSourceType.asset) {
       File file = await _getAssetFile(source);
-      await _setVideosSource(file.path, sourceType, requestAudioFocus);
+      await _setVideosSource(file.path, sourceType, requestAudioFocus, videoType);
     } else {
-      await _setVideosSource(source, sourceType, requestAudioFocus);
+      await _setVideosSource(source, sourceType, requestAudioFocus, videoType);
     }
   }
 
@@ -132,11 +134,12 @@ class VideoViewController {
 
   /// Sets the video source from a file in the device memory.
   Future<void> _setVideosSource(String videoSource, VideoSourceType sourceType,
-      bool requestAudioFocus) async {
+      bool requestAudioFocus, int videoType) async {
     Map<String, dynamic> args = {
       "videoSource": videoSource,
       "sourceType": sourceType.toString(),
       "requestAudioFocus": requestAudioFocus,
+      "videoType": videoType
     };
     try {
       await _channel.invokeMethod<void>("player#setVideoSource", args);
