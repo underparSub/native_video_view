@@ -47,7 +47,7 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
     }
     
     public func view() -> UIView {
-        return videoView!
+        return videoView ?? UIView()
     }
     
     func handle(call: FlutterMethodCall, result: FlutterResult) -> Void {
@@ -56,6 +56,7 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
             let arguments = call.arguments as? [String:Any]
             if let args = arguments {
                 let videoPath: String? = args["videoSource"] as? String
+                let videoType: Int? = args["videoType"] as? Int
                 let sourceType: String? = args["sourceType"] as? String
                 let requestAudioFocus: Bool? = args["requestAudioFocus"] as? Bool
                 self.requestAudioFocus = requestAudioFocus ?? false
@@ -63,7 +64,7 @@ public class NativeVideoViewController: NSObject, FlutterPlatformView {
                     let isUrl: Bool = sourceType == "VideoSourceType.network" ? true : false
                     self.configurePlayer()
                     DispatchQueue.main.async  { [weak self ] in
-                        self?.videoView?.configure(videoPath: path, isURL: isUrl)
+                        self?.videoView?.configure(videoPath: path, isURL: isUrl, videoType: videoType)
                     }
                     
                 }
