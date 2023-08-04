@@ -1,4 +1,4 @@
-// start point 8 (remove animation)
+// 시작점7 (remove cached Image)
 //  VideoView.swift
 //  native_video_view
 //
@@ -10,6 +10,7 @@ import AVFoundation
 
 
 class VideoView : UIView {
+    private var videoType:Int = 0
     private var playerLayer: AVPlayerLayer?
     private var player: AVPlayer?
     private var playerItem: AVPlayerItem?
@@ -22,7 +23,7 @@ class VideoView : UIView {
     private var videoSize: CGSize = CGSize.zero
     private var imageProcessingWorkItem: DispatchWorkItem?
     private var throttlingWorkItem: DispatchWorkItem?
-//    private let imageCache = NSCache<NSString, UIImage>()
+    //    private let imageCache = NSCache<NSString, UIImage>()
     private var generator: AVAssetImageGenerator?
     private var videoOutput: AVPlayerItemVideoOutput?
     private var context: CIContext?
@@ -43,17 +44,17 @@ class VideoView : UIView {
         view.layer.cornerRadius = 50
         return view
     }()
-//    private lazy var centerCircle: UIView =  {
-//        let view = UIView()
-//        view.translatesAutoresizingMaskIntoConstraints  = false
-//        view.layer.borderColor = UIColor(r: 159, g: 249, b: 255).cgColor
-//        view.layer.borderWidth = 3.0
-//        view.layer.masksToBounds =  true
-//        view.layer.cornerRadius = 24 / 2
-//        return view
-//    }()
-//
-//
+    //    private lazy var centerCircle: UIView =  {
+    //        let view = UIView()
+    //        view.translatesAutoresizingMaskIntoConstraints  = false
+    //        view.layer.borderColor = UIColor(r: 159, g: 249, b: 255).cgColor
+    //        view.layer.borderWidth = 3.0
+    //        view.layer.masksToBounds =  true
+    //        view.layer.cornerRadius = 24 / 2
+    //        return view
+    //    }()
+    //
+    //
     required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
@@ -62,6 +63,29 @@ class VideoView : UIView {
         super.init(frame: frame)
         self.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
         
+        
+    }
+    
+    private func configureMagnifier(frame: CGRect) {
+        if self.videoType == 1 {
+            return
+        }
+        if magnifiedView.superview == nil {
+            self.addSubview(magnifiedView)
+        }
+        magnifiedView.heightAnchor.constraint(equalToConstant: 100).isActive = true
+        magnifiedView.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        magnifiedView.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
+        magnifiedView.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
+        
+        if magnifiedImageView.superview == nil {
+            self.magnifiedView.addSubview(magnifiedImageView)
+        }
+        magnifiedImageView.heightAnchor.constraint(equalToConstant: frame.size.height).isActive = true
+        magnifiedImageView.widthAnchor.constraint(equalToConstant: frame.size.width).isActive = true
+        magnifiedImageView.centerYAnchor.constraint(equalTo: magnifiedView.centerYAnchor).isActive = true
+        magnifiedImageView.centerXAnchor.constraint(equalTo: magnifiedView.centerXAnchor).isActive = true
+        magnifiedView.isHidden = true
     }
     
     deinit {
@@ -74,25 +98,30 @@ class VideoView : UIView {
         self.initialized = false
     }
     
+    
+    
+    //    private func cacheImage(_ image: UIImage, for time: CMTime) {
+    //        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
+    //        imageCache.setObject(image, forKey: timeKey)
+    //    }
+    //
+    //    private func cachedImage(for time: CMTime) -> UIImage? {
+    //        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
+    //        return imageCache.object(forKey: timeKey)
+    //    }
+    //
+    //
+    
+    
+    
     override func layoutSubviews() {
         super.layoutSubviews()
+        
         self.configureVideoLayer()
-        self.configureMagnifier()
+        self.configureMagnifier(frame: self.frame)
     }
-    
-//    private func cacheImage(_ image: UIImage, for time: CMTime) {
-//        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
-//        imageCache.setObject(image, forKey: timeKey)
-//    }
-//
-//    private func cachedImage(for time: CMTime) -> UIImage? {
-//        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
-//        return imageCache.object(forKey: timeKey)
-//    }
-//
-//
-    
-    func configure(videoPath: String?, isURL: Bool){
+    func configure(videoPath: String?, isURL: Bool, videoType: Int?){
+        self.videoType = videoType ?? 0
         if !initialized {
             self.initVideoPlayer()
         }
@@ -116,42 +145,27 @@ class VideoView : UIView {
             self.generator?.maximumSize = assetTrack.naturalSize
             self.configureVideoLayer()
             NotificationCenter.default.addObserver(self, selector: #selector(onVideoCompleted(notification:)), name: .AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
+            
         }
     }
     
     private func configureVideoLayer(){
-        playerLayer = AVPlayerLayer(player: player)
+        if playerLayer == nil {
+            playerLayer = AVPlayerLayer(player: player)
+            layer.addSublayer(playerLayer!)
+            
+        }
         playerLayer?.frame = bounds
         playerLayer?.videoGravity = .resizeAspect
-        if let playerLayer = self.playerLayer {
-            self.clearSubLayers()
-            layer.addSublayer(playerLayer)
+    }
+    
+    private func clearSubLayers(){
+        layer.sublayers?.forEach{
+            $0.removeFromSuperlayer()
         }
     }
     
-    private func configureMagnifier() {
-        self.clearMagnifier()
-        self.addSubview(magnifiedView)
-        magnifiedView.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
-        magnifiedView.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
-        magnifiedView.heightAnchor.constraint(equalToConstant: 100).isActive = true
-        magnifiedView.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        
-        self.magnifiedView.addSubview(magnifiedImageView)
-        magnifiedImageView.centerYAnchor.constraint(equalTo: magnifiedView.centerYAnchor).isActive = true
-        magnifiedImageView.centerXAnchor.constraint(equalTo: magnifiedView.centerXAnchor).isActive = true
-        magnifiedImageView.heightAnchor.constraint(equalToConstant: self.frame.size.height).isActive = true
-        magnifiedImageView.widthAnchor.constraint(equalToConstant: self.frame.size.width).isActive = true
-        
-        
-//        self.magnifiedImageView.addSubview(centerCircle)
-//        centerCircle.centerYAnchor.constraint(equalTo: magnifiedImageView.centerYAnchor).isActive = true
-//        centerCircle.centerXAnchor.constraint(equalTo: magnifiedImageView.centerXAnchor).isActive = true
-//        centerCircle.heightAnchor.constraint(equalToConstant: 24).isActive = true
-//        centerCircle.widthAnchor.constraint(equalToConstant: 24).isActive = true
-        magnifiedView.isHidden = true
-        
-    }
+    
     private func clearMagnifier() {
         self.subviews.forEach{
             $0.removeFromSuperview()
@@ -159,11 +173,7 @@ class VideoView : UIView {
     }
     
     
-    private func clearSubLayers(){
-        layer.sublayers?.forEach{
-            $0.removeFromSuperlayer()
-        }
-    }
+    
     
     private func initVideoPlayer(){
         self.player = AVPlayer(playerItem: nil)
@@ -240,7 +250,7 @@ class VideoView : UIView {
         
     }
     
-   
+    
     
     func pause(restart:Bool){
         self.player?.pause()
