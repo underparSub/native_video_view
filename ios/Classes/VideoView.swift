@@ -150,10 +150,11 @@ class VideoView : UIView {
     }
     
     private func configureVideoLayer(){
-        if playerLayer == nil {
+         if playerLayer == nil {
             playerLayer = AVPlayerLayer(player: player)
             layer.addSublayer(playerLayer!)
-            
+        } else if playerLayer?.sublayers == nil {
+            layer.addSublayer(playerLayer!)
         }
         playerLayer?.frame = bounds
         playerLayer?.videoGravity = .resizeAspect
