@@ -1,4 +1,4 @@
-// 시작점7 (remove cached Image)
+// 시작점8 (fix)
 //  VideoView.swift
 //  native_video_view
 //
@@ -22,14 +22,14 @@ class VideoView : UIView {
     private var videoPath: String?
     private var videoSize: CGSize = CGSize.zero
     private var imageProcessingWorkItem: DispatchWorkItem?
-    private var throttlingWorkItem: DispatchWorkItem?
+    
     //    private let imageCache = NSCache<NSString, UIImage>()
     private var generator: AVAssetImageGenerator?
     private var videoOutput: AVPlayerItemVideoOutput?
     private var context: CIContext?
     private lazy var magnifiedImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.translatesAutoresizingMaskIntoConstraints = true  // 이 부분을 수정
         imageView.backgroundColor = UIColor.black
         imageView.contentMode = .scaleAspectFill
         imageView.layer.masksToBounds  = true
@@ -37,23 +37,15 @@ class VideoView : UIView {
     }()
     private lazy var magnifiedView: UIView = {
         let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
+        view.translatesAutoresizingMaskIntoConstraints = true  // 이 부분을 수정
         view.layer.borderColor = UIColor.white.cgColor
         view.layer.borderWidth = 1.0
         view.layer.masksToBounds =  true
         view.layer.cornerRadius = 50
         return view
     }()
-    //    private lazy var centerCircle: UIView =  {
-    //        let view = UIView()
-    //        view.translatesAutoresizingMaskIntoConstraints  = false
-    //        view.layer.borderColor = UIColor(r: 159, g: 249, b: 255).cgColor
-    //        view.layer.borderWidth = 3.0
-    //        view.layer.masksToBounds =  true
-    //        view.layer.cornerRadius = 24 / 2
-    //        return view
-    //    }()
-    //
+    
+    
     //
     required init?(coder: NSCoder) {
         super.init(coder: coder)
@@ -66,6 +58,50 @@ class VideoView : UIView {
         
     }
     
+    
+    //    private lazy var magnifiedImageView: UIImageView = {
+    //        let imageView = UIImageView()
+    //        imageView.translatesAutoresizingMaskIntoConstraints = false
+    //        imageView.backgroundColor = UIColor.black
+    //        imageView.contentMode = .scaleAspectFill
+    //        imageView.layer.masksToBounds  = true
+    //        return imageView
+    //    }()
+    //    private lazy var magnifiedView: UIView = {
+    //        let view = UIView()
+    //        view.translatesAutoresizingMaskIntoConstraints = false
+    //        view.layer.borderColor = UIColor.white.cgColor
+    //        view.layer.borderWidth = 1.0
+    //        view.layer.masksToBounds =  true
+    //        view.layer.cornerRadius = 50
+    //        return view
+    //    }()
+    //    private func configureMagnifier(frame: CGRect) {
+    //        if self.videoType == 1 {
+    //            return
+    //        }
+    //        if magnifiedView.superview == nil {
+    //            print("add magnifiedView")
+    //            self.addSubview(magnifiedView)
+    //        }
+    //        magnifiedView.heightAnchor.constraint(equalToConstant: 100).isActive = true
+    //        magnifiedView.widthAnchor.constraint(equalToConstant: 100).isActive = true
+    //        magnifiedView.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
+    //        magnifiedView.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
+    //
+    //        if magnifiedImageView.superview == nil {
+    //            print("add magnifiedImageView")
+    //            self.magnifiedView.addSubview(magnifiedImageView)
+    //        }
+    //        magnifiedImageView.heightAnchor.constraint(equalToConstant: frame.size.height).isActive = true
+    //        magnifiedImageView.widthAnchor.constraint(equalToConstant: frame.size.width).isActive = true
+    //        magnifiedImageView.centerYAnchor.constraint(equalTo: magnifiedView.centerYAnchor).isActive = true
+    //        magnifiedImageView.centerXAnchor.constraint(equalTo: magnifiedView.centerXAnchor).isActive = true
+    //        magnifiedView.isHidden = true
+    //    }
+    
+    
+    
     private func configureMagnifier(frame: CGRect) {
         if self.videoType == 1 {
             return
@@ -73,44 +109,18 @@ class VideoView : UIView {
         if magnifiedView.superview == nil {
             self.addSubview(magnifiedView)
         }
-        magnifiedView.heightAnchor.constraint(equalToConstant: 100).isActive = true
-        magnifiedView.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        magnifiedView.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
-        magnifiedView.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
+        magnifiedView.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
         
         if magnifiedImageView.superview == nil {
             self.magnifiedView.addSubview(magnifiedImageView)
         }
-        magnifiedImageView.heightAnchor.constraint(equalToConstant: frame.size.height).isActive = true
-        magnifiedImageView.widthAnchor.constraint(equalToConstant: frame.size.width).isActive = true
-        magnifiedImageView.centerYAnchor.constraint(equalTo: magnifiedView.centerYAnchor).isActive = true
-        magnifiedImageView.centerXAnchor.constraint(equalTo: magnifiedView.centerXAnchor).isActive = true
+        magnifiedImageView.frame = CGRect(x: (100 - frame.size.width) / 2, y: (100 - frame.size.height) / 2, width: frame.size.width, height: frame.size.height)  // 이 부분을 추가
+        
         magnifiedView.isHidden = true
     }
     
-    deinit {
-        self.player?.pause()
-        self.removeOnFailedObserver()
-        self.removeOnPreparedObserver()
-        self.removeOnCompletionObserver()
-        self.player?.removeObserver(self, forKeyPath: "status")
-        NotificationCenter.default.removeObserver(self)
-        self.initialized = false
-    }
     
     
-    
-    //    private func cacheImage(_ image: UIImage, for time: CMTime) {
-    //        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
-    //        imageCache.setObject(image, forKey: timeKey)
-    //    }
-    //
-    //    private func cachedImage(for time: CMTime) -> UIImage? {
-    //        let timeKey = NSString(string: "\(self.videoPath ?? ""):\(time.value)")
-    //        return imageCache.object(forKey: timeKey)
-    //    }
-    //
-    //
     
     
     
@@ -150,14 +160,23 @@ class VideoView : UIView {
     }
     
     private func configureVideoLayer(){
-         if playerLayer == nil {
-            playerLayer = AVPlayerLayer(player: player)
-            layer.addSublayer(playerLayer!)
-        } else if playerLayer?.sublayers == nil {
-            layer.addSublayer(playerLayer!)
-        }
+        //
+        //        if playerLayer == nil {
+        //            playerLayer = AVPlayerLayer(player: player)
+        //            layer.addSublayer(playerLayer!)
+        //        } else if playerLayer?.sublayers == nil {
+        //            layer.addSublayer(playerLayer!)
+        //        }
+        //        playerLayer?.frame = bounds
+        //        playerLayer?.videoGravity = .resizeAspect
+        
+        playerLayer = AVPlayerLayer(player: player)
         playerLayer?.frame = bounds
         playerLayer?.videoGravity = .resizeAspect
+        if let playerLayer = self.playerLayer {
+            self.clearSubLayers()
+            layer.addSublayer(playerLayer)
+        }
     }
     
     private func clearSubLayers(){
@@ -215,7 +234,7 @@ class VideoView : UIView {
             height = viewerWidth / vw * vh;
             width = viewerWidth;
         }
-        
+        imageProcessingWorkItem?.cancel()
         imageProcessingWorkItem = DispatchWorkItem { [weak self] in
             guard let pixelBuffer = self?.videoOutput?.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: nil) else {
                 return
@@ -234,13 +253,13 @@ class VideoView : UIView {
                 newImage.draw(in: rect)
             }
             if self?.imageProcessingWorkItem?.isCancelled == false {
-                DispatchQueue.main.async {
+                DispatchQueue.main.sync {
                     self?.magnifiedImageView.image = image
                     self?.magnifiedView.center = CGPoint(x: panLocation.x - 50, y: panLocation.y - 50)
                     self?.fadeAnimation(isShow: true)
                 }
             } else {
-                DispatchQueue.main.async {
+                DispatchQueue.main.sync {
                     self?.magnifiedView.isHidden = true
                 }
             }
@@ -250,6 +269,17 @@ class VideoView : UIView {
         }
         
     }
+    
+    deinit {
+        self.player?.pause()
+        self.removeOnFailedObserver()
+        self.removeOnPreparedObserver()
+        self.removeOnCompletionObserver()
+        self.player?.removeObserver(self, forKeyPath: "status")
+        NotificationCenter.default.removeObserver(self)
+        self.initialized = false
+    }
+    
     
     
     
