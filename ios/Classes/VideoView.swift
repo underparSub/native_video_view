@@ -22,6 +22,8 @@ class VideoView : UIView {
     private var videoPath: String?
     private var videoSize: CGSize = CGSize.zero
     private var imageProcessingWorkItem: DispatchWorkItem?
+    private let magnifierSize: CGFloat = 120
+    private let magnifierRatio: CGFloat = 2.0
     
     //    private let imageCache = NSCache<NSString, UIImage>()
     private var generator: AVAssetImageGenerator?
@@ -41,7 +43,7 @@ class VideoView : UIView {
         view.layer.borderColor = UIColor.white.cgColor
         view.layer.borderWidth = 1.0
         view.layer.masksToBounds =  true
-        view.layer.cornerRadius = 50
+        view.layer.cornerRadius = magnifierSize / 2
         return view
     }()
     
@@ -109,12 +111,12 @@ class VideoView : UIView {
         if magnifiedView.superview == nil {
             self.addSubview(magnifiedView)
         }
-        magnifiedView.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+        magnifiedView.frame = CGRect(x: 0, y: 0, width: magnifierSize, height: magnifierSize)
         
         if magnifiedImageView.superview == nil {
             self.magnifiedView.addSubview(magnifiedImageView)
         }
-        magnifiedImageView.frame = CGRect(x: (100 - frame.size.width) / 2, y: (100 - frame.size.height) / 2, width: frame.size.width, height: frame.size.height)  // 이 부분을 추가
+        magnifiedImageView.frame = CGRect(x: (magnifierSize - frame.size.width) / 2, y: (magnifierSize - frame.size.height) / 2, width: frame.size.width, height: frame.size.height)  // 이 부분을 추가
         
         magnifiedView.isHidden = true
     }
@@ -160,15 +162,7 @@ class VideoView : UIView {
     }
     
     private func configureVideoLayer(){
-        //
-        //        if playerLayer == nil {
-        //            playerLayer = AVPlayerLayer(player: player)
-        //            layer.addSublayer(playerLayer!)
-        //        } else if playerLayer?.sublayers == nil {
-        //            layer.addSublayer(playerLayer!)
-        //        }
-        //        playerLayer?.frame = bounds
-        //        playerLayer?.videoGravity = .resizeAspect
+
         
         playerLayer = AVPlayerLayer(player: player)
         playerLayer?.frame = bounds
@@ -239,6 +233,7 @@ class VideoView : UIView {
             guard let pixelBuffer = self?.videoOutput?.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: nil) else {
                 return
             }
+            guard let magnifierSize = self?.magnifierSize else { return }
             let baseImage = CIImage(cvPixelBuffer: pixelBuffer)
             guard let cgImage = self?.context?.createCGImage(baseImage, from: baseImage.extent) else { return }
             let newImage = UIImage(cgImage: cgImage)
@@ -255,7 +250,7 @@ class VideoView : UIView {
             if self?.imageProcessingWorkItem?.isCancelled == false {
                 DispatchQueue.main.async {
                     self?.magnifiedImageView.image = image
-                    self?.magnifiedView.center = CGPoint(x: panLocation.x - 50, y: panLocation.y - 50)
+                    self?.magnifiedView.center = CGPoint(x: panLocation.x - (magnifierSize / 2) - 16, y: panLocation.y - (magnifierSize / 2) - 16)
                     self?.fadeAnimation(isShow: true)
                 }
             } else {
@@ -444,9 +439,4 @@ extension UIColor {
         self.init(red: r/255, green: g/255, blue: b/255, alpha: 1)
     }
 }
-
-
-
-
-
 
