@@ -68,9 +68,9 @@ class VideoView : UIView {
     
     private lazy var crossLineView: UIView =  {
         let horizontalLine = UIView(frame: CGRect(x: (crossSize - crossSize) / 2, y: (crossSize - crossLineWidth) / 2, width: crossSize, height: crossLineWidth))
-        horizontalLine.backgroundColor = shashotColor
+        horizontalLine.backgroundColor = UIColor(r: 75, g: 255, b: 168)
         let verticalLine = UIView(frame: CGRect(x: (crossSize - crossLineWidth) / 2, y: (crossSize - crossSize) / 2, width: crossLineWidth, height: crossSize))
-        verticalLine.backgroundColor = shashotColor
+        verticalLine.backgroundColor = UIColor(r: 75, g: 255, b: 168)
         let crossView = UIView(frame: CGRect(x: 0, y: 0, width: crossSize, height: crossSize))
         crossView.addSubview(horizontalLine)
         crossView.addSubview(verticalLine)
@@ -151,6 +151,7 @@ class VideoView : UIView {
         magnifiedView.frame = CGRect(x: 0, y: 0, width: magnifierSize, height: magnifierSize)
         magnifiedView.addSubview(magnifiedImageView)
         magnifiedImageView.frame = CGRect(x: (magnifierSize - self.frame.size.width) / 2, y: (magnifierSize - self.frame.size.height) / 2, width: self.frame.size.width, height: self.frame.size.height)
+        
         switch self.videoType {
         case 0:
             magnifiedImageView.addSubview(centerCircle)
@@ -159,6 +160,7 @@ class VideoView : UIView {
         default:
             break
         }
+        
         magnifiedView.isHidden = true
     }
     
