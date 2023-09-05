@@ -24,6 +24,11 @@ class VideoView : UIView {
     private var imageProcessingWorkItem: DispatchWorkItem?
     private let magnifierSize: CGFloat = 120
     private let magnifierRatio: CGFloat = 2.0
+    private let circleSize: CGFloat = 20.0
+    private let crossSize: CGFloat = 20.0
+    private let crossLineWidth: CGFloat = 2.0
+    private let shashotColor: UIColor = UIColor(r: 159, g: 249, b: 255)
+    
     
     //    private let imageCache = NSCache<NSString, UIImage>()
     private var generator: AVAssetImageGenerator?
@@ -46,6 +51,33 @@ class VideoView : UIView {
         view.layer.cornerRadius = magnifierSize / 2
         return view
     }()
+    
+    private lazy var centerCircle: UIView =  {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints  = true
+        view.layer.borderColor = shashotColor.cgColor
+        view.layer.borderWidth = 3.0
+        view.layer.masksToBounds =  true
+        view.layer.cornerRadius = circleSize / 2
+        let centerX = (magnifiedImageView.frame.size.width - circleSize) / 2.0
+        let centerY = (magnifiedImageView.frame.size.height - circleSize) / 2.0
+        view.frame = CGRect(x: centerX, y: centerY, width: circleSize, height: circleSize)
+        return view
+    }()
+    
+    
+    private lazy var crossLineView: UIView =  {
+        let horizontalLine = UIView(frame: CGRect(x: (crossSize - crossSize) / 2, y: (crossSize - crossLineWidth) / 2, width: crossSize, height: crossLineWidth))
+        horizontalLine.backgroundColor = shashotColor
+        let verticalLine = UIView(frame: CGRect(x: (crossSize - crossLineWidth) / 2, y: (crossSize - crossSize) / 2, width: crossLineWidth, height: crossSize))
+        verticalLine.backgroundColor = shashotColor
+        let crossView = UIView(frame: CGRect(x: 0, y: 0, width: crossSize, height: crossSize))
+        crossView.addSubview(horizontalLine)
+        crossView.addSubview(verticalLine)
+        crossView.center = CGPoint(x: magnifiedImageView.frame.size.width  / 2, y: magnifiedImageView.frame.size.height / 2)
+        return crossView
+    }()
+    
     
     
     //
@@ -103,24 +135,32 @@ class VideoView : UIView {
     //    }
     
     
-    
-    private func configureMagnifier(frame: CGRect) {
-        if self.videoType == 1 {
-            return
+    private func configureVideoLayer(){
+        playerLayer = AVPlayerLayer(player: player)
+        playerLayer?.frame = bounds
+        playerLayer?.videoGravity = .resizeAspect
+        if let playerLayer = self.playerLayer {
+            self.clearSubLayers()
+            layer.addSublayer(playerLayer)
         }
-        if magnifiedView.superview == nil {
-            self.addSubview(magnifiedView)
-        }
-        magnifiedView.frame = CGRect(x: 0, y: 0, width: magnifierSize, height: magnifierSize)
-        
-        if magnifiedImageView.superview == nil {
-            self.magnifiedView.addSubview(magnifiedImageView)
-        }
-        magnifiedImageView.frame = CGRect(x: (magnifierSize - frame.size.width) / 2, y: (magnifierSize - frame.size.height) / 2, width: frame.size.width, height: frame.size.height)  // 이 부분을 추가
-        
-        magnifiedView.isHidden = true
     }
     
+    private func configureMagnifier() {
+        self.clearMagnifier()
+        self.addSubview(magnifiedView)
+        magnifiedView.frame = CGRect(x: 0, y: 0, width: magnifierSize, height: magnifierSize)
+        magnifiedView.addSubview(magnifiedImageView)
+        magnifiedImageView.frame = CGRect(x: (magnifierSize - self.frame.size.width) / 2, y: (magnifierSize - self.frame.size.height) / 2, width: self.frame.size.width, height: self.frame.size.height)
+        switch self.videoType {
+        case 0:
+            magnifiedImageView.addSubview(centerCircle)
+        case 1:
+            magnifiedImageView.addSubview(crossLineView)
+        default:
+            break
+        }
+        magnifiedView.isHidden = true
+    }
     
     
     
@@ -130,7 +170,7 @@ class VideoView : UIView {
         super.layoutSubviews()
         
         self.configureVideoLayer()
-        self.configureMagnifier(frame: self.frame)
+        self.configureMagnifier()
     }
     func configure(videoPath: String?, isURL: Bool, videoType: Int?){
         self.videoType = videoType ?? 0
@@ -161,17 +201,6 @@ class VideoView : UIView {
         }
     }
     
-    private func configureVideoLayer(){
-
-        
-        playerLayer = AVPlayerLayer(player: player)
-        playerLayer?.frame = bounds
-        playerLayer?.videoGravity = .resizeAspect
-        if let playerLayer = self.playerLayer {
-            self.clearSubLayers()
-            layer.addSublayer(playerLayer)
-        }
-    }
     
     private func clearSubLayers(){
         layer.sublayers?.forEach{
@@ -439,4 +468,3 @@ extension UIColor {
         self.init(red: r/255, green: g/255, blue: b/255, alpha: 1)
     }
 }
-
