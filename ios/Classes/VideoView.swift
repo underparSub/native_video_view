@@ -198,6 +198,7 @@ class VideoView : UIView {
             self.generator?.appliesPreferredTrackTransform = true
             self.generator?.maximumSize = assetTrack.naturalSize
             self.configureVideoLayer()
+            self.configureMagnifier()
             NotificationCenter.default.addObserver(self, selector: #selector(onVideoCompleted(notification:)), name: .AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
             
         }
