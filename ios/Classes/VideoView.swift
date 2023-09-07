@@ -151,6 +151,7 @@ class VideoView : UIView {
         magnifiedView.frame = CGRect(x: 0, y: 0, width: magnifierSize, height: magnifierSize)
         magnifiedView.addSubview(magnifiedImageView)
         magnifiedImageView.frame = CGRect(x: (magnifierSize - self.frame.size.width) / 2, y: (magnifierSize - self.frame.size.height) / 2, width: self.frame.size.width, height: self.frame.size.height)
+   
         
         switch self.videoType {
         case 0:
@@ -198,7 +199,7 @@ class VideoView : UIView {
             self.generator?.appliesPreferredTrackTransform = true
             self.generator?.maximumSize = assetTrack.naturalSize
             self.configureVideoLayer()
-            self.configureMagnifier()
+//            self.configureMagnifier()
             NotificationCenter.default.addObserver(self, selector: #selector(onVideoCompleted(notification:)), name: .AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
             
         }
