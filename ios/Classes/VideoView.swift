@@ -59,35 +59,52 @@ class VideoView : UIView {
         view.layer.borderWidth = 3.0
         view.layer.masksToBounds =  true
         view.layer.cornerRadius = circleSize / 2
-        let centerX = (magnifiedImageView.frame.size.width - circleSize) / 2.0
-        let centerY = (magnifiedImageView.frame.size.height - circleSize) / 2.0
-        view.frame = CGRect(x: centerX, y: centerY, width: circleSize, height: circleSize)
         return view
     }()
+
+    func positionCenterCircle() {
+        let centerX = (magnifiedImageView.frame.size.width - circleSize) / 2.0
+        let centerY = (magnifiedImageView.frame.size.height - circleSize) / 2.0
+        centerCircle.frame = CGRect(x: centerX, y: centerY, width: circleSize, height: circleSize)
+    }
     
-    
-    private lazy var crossLineView: UIView =  {
-        let horizontalLine = UIView(frame: CGRect(x: (crossSize - crossSize) / 2, y: (crossSize - crossLineWidth) / 2, width: crossSize, height: crossLineWidth))
+    private lazy var crossLineView: UIView = {
+        let horizontalLine = UIView()
         horizontalLine.backgroundColor = UIColor(r: 75, g: 255, b: 168)
-        let verticalLine = UIView(frame: CGRect(x: (crossSize - crossLineWidth) / 2, y: (crossSize - crossSize) / 2, width: crossLineWidth, height: crossSize))
+        let verticalLine = UIView()
         verticalLine.backgroundColor = UIColor(r: 75, g: 255, b: 168)
-        let crossView = UIView(frame: CGRect(x: 0, y: 0, width: crossSize, height: crossSize))
+        let crossView = UIView()
         crossView.addSubview(horizontalLine)
         crossView.addSubview(verticalLine)
-        crossView.center = CGPoint(x: magnifiedImageView.frame.size.width  / 2, y: magnifiedImageView.frame.size.height / 2)
         return crossView
     }()
+
+    func positionCrossLineView() {
+        let horizontalLine = crossLineView.subviews[0]
+        let verticalLine = crossLineView.subviews[1]
+        horizontalLine.frame = CGRect(x: (crossSize - crossSize) / 2, y: (crossSize - crossLineWidth) / 2, width: crossSize, height: crossLineWidth)
+        verticalLine.frame = CGRect(x: (crossSize - crossLineWidth) / 2, y: (crossSize - crossSize) / 2, width: crossLineWidth, height: crossSize)
+        crossLineView.frame = CGRect(x: 0, y: 0, width: crossSize, height: crossSize)
+        crossLineView.center = CGPoint(x: magnifiedImageView.frame.size.width  / 2, y: magnifiedImageView.frame.size.height / 2)
+    }
+
     
     
     
     //
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+        print("required init")
+//        configureVideoLayer()
+//        configureMagnifier()
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        self.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+        print("override required init")
+//
+//        configureVideoLayer()
+//        configureMagnifier()
         
         
     }
@@ -135,23 +152,25 @@ class VideoView : UIView {
     //    }
     
     
-    private func configureVideoLayer(){
+    private func configureVideoLayer() {
+        guard playerLayer == nil else { return } // 이미 있으면 설정하지 않음
+        self.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
         playerLayer = AVPlayerLayer(player: player)
         playerLayer?.frame = bounds
         playerLayer?.videoGravity = .resizeAspect
         if let playerLayer = self.playerLayer {
-            self.clearSubLayers()
             layer.addSublayer(playerLayer)
         }
+        
     }
-    
+
     private func configureMagnifier() {
-        self.clearMagnifier()
+        guard magnifiedView.superview == nil else { return } // 이미 있으면 설정하지 않음
+        
         self.addSubview(magnifiedView)
         magnifiedView.frame = CGRect(x: 0, y: 0, width: magnifierSize, height: magnifierSize)
         magnifiedView.addSubview(magnifiedImageView)
         magnifiedImageView.frame = CGRect(x: (magnifierSize - self.frame.size.width) / 2, y: (magnifierSize - self.frame.size.height) / 2, width: self.frame.size.width, height: self.frame.size.height)
-   
         
         switch self.videoType {
         case 0:
@@ -166,16 +185,19 @@ class VideoView : UIView {
     }
     
     
-    
-    
-    
     override func layoutSubviews() {
         super.layoutSubviews()
+
+        playerLayer?.frame = bounds
+        magnifiedView.frame = CGRect(x: 0, y: 0, width: magnifierSize, height: magnifierSize)
+        magnifiedImageView.frame = CGRect(x: (magnifierSize - self.frame.size.width) / 2, y: (magnifierSize - self.frame.size.height) / 2, width: self.frame.size.width, height: self.frame.size.height)
         
-        self.configureVideoLayer()
-        self.configureMagnifier()
+        positionCenterCircle() // centerCircle의 위치를 조정합니다.
+        positionCrossLineView() // crossLineView의 위치를 조정합니다.
     }
+
     func configure(videoPath: String?, isURL: Bool, videoType: Int?){
+        print("configure")
         self.videoType = videoType ?? 0
         if !initialized {
             self.initVideoPlayer()
@@ -199,10 +221,12 @@ class VideoView : UIView {
             self.generator?.appliesPreferredTrackTransform = true
             self.generator?.maximumSize = assetTrack.naturalSize
             self.configureVideoLayer()
-//            self.configureMagnifier()
+            self.configureMagnifier()
+            
             NotificationCenter.default.addObserver(self, selector: #selector(onVideoCompleted(notification:)), name: .AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
             
         }
+        
     }
     
     
