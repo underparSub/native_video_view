@@ -22,6 +22,7 @@ class VideoView : UIView {
     private var videoPath: String?
     private var videoSize: CGSize = CGSize.zero
     private var imageProcessingWorkItem: DispatchWorkItem?
+    private var videoTransform: CGAffineTransform?
     private let magnifierSize: CGFloat = 120
     private let magnifierRatio: CGFloat = 2.0
     private let circleSize: CGFloat = 20.0
@@ -31,7 +32,7 @@ class VideoView : UIView {
     
     
     //    private let imageCache = NSCache<NSString, UIImage>()
-    private var generator: AVAssetImageGenerator?
+//    private var generator: AVAssetImageGenerator?
     private var videoOutput: AVPlayerItemVideoOutput?
     private var context: CIContext?
     private lazy var magnifiedImageView: UIImageView = {
@@ -192,8 +193,8 @@ class VideoView : UIView {
         magnifiedView.frame = CGRect(x: 0, y: 0, width: magnifierSize, height: magnifierSize)
         magnifiedImageView.frame = CGRect(x: (magnifierSize - self.frame.size.width) / 2, y: (magnifierSize - self.frame.size.height) / 2, width: self.frame.size.width, height: self.frame.size.height)
         
-        positionCenterCircle() // centerCircle의 위치를 조정합니다.
-        positionCrossLineView() // crossLineView의 위치를 조정합니다.
+        positionCenterCircle()
+        positionCrossLineView()
     }
 
     func configure(videoPath: String?, isURL: Bool, videoType: Int?){
@@ -207,6 +208,7 @@ class VideoView : UIView {
             let uri: URL? = isURL ? URL(string: path) : URL(fileURLWithPath: path)
             let asset = AVAsset(url: uri!)
             self.videoSize = getVideoSize(from: uri!) ?? CGSize.zero
+            self.videoTransform = getImageOrientation(from: uri!)
             player?.replaceCurrentItem(with: AVPlayerItem(asset: asset))
             self.playerItem = player?.currentItem
             let pixelBufferAttributes: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
@@ -214,12 +216,12 @@ class VideoView : UIView {
             self.playerItem?.add(videoOutput!)
             self.context = CIContext()
             self.videoAsset = asset
-            guard let assetTrack = asset.tracks(withMediaType: .video).first else { return }
-            self.generator = AVAssetImageGenerator(asset: asset)
-            self.generator?.requestedTimeToleranceBefore = .zero
-            self.generator?.requestedTimeToleranceAfter = .zero
-            self.generator?.appliesPreferredTrackTransform = true
-            self.generator?.maximumSize = assetTrack.naturalSize
+//            guard let assetTrack = asset.tracks(withMediaType: .video).first else { return }
+//            self.generator = AVAssetImageGenerator(asset: asset)
+//            self.generator?.requestedTimeToleranceBefore = .zero
+//            self.generator?.requestedTimeToleranceAfter = .zero
+//            self.generator?.appliesPreferredTrackTransform = true
+//            self.generator?.maximumSize = assetTrack.naturalSize
             self.configureVideoLayer()
             self.configureMagnifier()
             
@@ -275,6 +277,7 @@ class VideoView : UIView {
         let time = player.currentTime()
         let vw = self.videoSize.width
         let vh = self.videoSize.height
+        
         let vRatio = vw / vh;
         let viewerWidth = self.frame.width
         let viewerHeight = self.frame.height
@@ -291,8 +294,21 @@ class VideoView : UIView {
                 return
             }
             guard let magnifierSize = self?.magnifierSize else { return }
+
             let baseImage = CIImage(cvPixelBuffer: pixelBuffer)
-            guard let cgImage = self?.context?.createCGImage(baseImage, from: baseImage.extent) else { return }
+            guard let videoTransform = self?.videoTransform else { return }
+            var rotation: Double = 0.0
+            if videoTransform.a == 0 && videoTransform.b == 1.0 && videoTransform.c == -1.0 && videoTransform.d == 0 {
+                rotation = -Double.pi / 2 // -90 degrees (시계 방향으로 90도 회전)
+            } else if videoTransform.a == 0 && videoTransform.b == -1.0 && videoTransform.c == 1.0 && videoTransform.d == 0 {
+                rotation = Double.pi / 2 // 90 degrees (반시계 방향으로 90도 회전)
+            } else if videoTransform.a == -1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == -1.0 {
+                rotation = Double.pi // 180 degrees
+            }
+            
+            let rotateTransform = CGAffineTransform(rotationAngle: CGFloat(rotation))
+            let orientedImage = baseImage.transformed(by: rotateTransform)
+            guard let cgImage = self?.context?.createCGImage(orientedImage, from: orientedImage.extent) else { return }
             let newImage = UIImage(cgImage: cgImage)
             let targetSize = CGSize(width: width, height: height)
             let widthRatio  = targetSize.width  / newImage.size.width
@@ -317,7 +333,7 @@ class VideoView : UIView {
             }
         }
         if let imageProcessingWorkItem = imageProcessingWorkItem  {
-            DispatchQueue.global(qos: .userInteractive).async(execute: imageProcessingWorkItem)
+            DispatchQueue.global().async(execute: imageProcessingWorkItem)
         }
         
     }
@@ -369,6 +385,12 @@ class VideoView : UIView {
         guard let track = asset.tracks(withMediaType: .video).first else { return nil }
         let size = track.naturalSize.applying(track.preferredTransform)
         return CGSize(width: abs(size.width), height: abs(size.height))
+    }
+    
+    func getImageOrientation(from videoUrl: URL) -> CGAffineTransform? {
+        let asset = AVURLAsset(url: videoUrl)
+        guard let track = asset.tracks(withMediaType: .video).first else { return nil }
+        return track.preferredTransform
     }
     
     
