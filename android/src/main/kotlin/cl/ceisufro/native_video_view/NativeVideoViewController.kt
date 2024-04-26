@@ -151,13 +151,14 @@ class NativeVideoViewController(
         super.onPause(owner)
         if (disposed) return
         this.pausePlayback()
+        this.stopPlayback()
     }
 
     override fun onStop(owner: LifecycleOwner) {
         Log.d("NativeVideoViewController", "onStop" )
         super.onStop(owner)
         if (disposed) return
-        this.stopPlayback()
+        
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
