@@ -132,7 +132,7 @@ class NativeVideoViewController(
         super.onResume(owner)
         Log.d("NativeVideoViewController", "onResume" )
         if (disposed) return
-        if (playerState == PlayerState.NOT_INITIALIZED && mediaPlayer != null) {
+        if ((playerState == PlayerState.NOT_INITIALIZED || playerState == PlayerState.PAUSED) && mediaPlayer != null) {
             try {
                this.mediaPlayer?.prepareAsync()
          } catch (e: IllegalStateException) {
