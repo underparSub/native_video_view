@@ -37,6 +37,7 @@ class NativeVideoViewController(
     private var videoView: VideoView? = null
     private var dataSource: String? = null
     private var disposed: Boolean = false
+        
     private var requestAudioFocus: Boolean = true
     private var volume: Double = 1.0
     private var mute: Boolean = false
@@ -132,9 +133,10 @@ class NativeVideoViewController(
         super.onResume(owner)
         Log.d("NativeVideoViewController", "onResume" )
         if (disposed) return
-        if ((playerState == PlayerState.NOT_INITIALIZED || playerState == PlayerState.PAUSED) && mediaPlayer != null) {
+        if (playerState == PlayerState.NOT_INITIALIZED || playerState == PlayerState.PAUSED) {
             try {
                 Log.d("NativeVideoViewController", "try prepareAsync" )
+               initVideo(this.dataSource)
                this.mediaPlayer?.prepareAsync()
          } catch (e: IllegalStateException) {
                 Log.e("NativeVideoViewController", "Error preparing media player", e)
