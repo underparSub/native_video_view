@@ -206,6 +206,8 @@ class NativeVideoViewController(
 
     private fun stopPlayback() {
         videoView?.stopPlayback()
+        mediaPlayer?.release()  
+        mediaPlayer = null    
         playerState = PlayerState.NOT_INITIALIZED
     }
 
