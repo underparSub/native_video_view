@@ -134,6 +134,7 @@ class NativeVideoViewController(
         if (disposed) return
         if ((playerState == PlayerState.NOT_INITIALIZED || playerState == PlayerState.PAUSED) && mediaPlayer != null) {
             try {
+                Log.d("NativeVideoViewController", "try prepareAsync" )
                this.mediaPlayer?.prepareAsync()
          } catch (e: IllegalStateException) {
                 Log.e("NativeVideoViewController", "Error preparing media player", e)
@@ -212,6 +213,7 @@ class NativeVideoViewController(
     }
 
     private fun stopPlayback() {
+        Log.d("NativeVideoViewController", "release stopPlayback" )
         videoView?.stopPlayback()
         mediaPlayer?.release()  
         mediaPlayer = null    
