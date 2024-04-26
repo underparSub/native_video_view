@@ -130,6 +130,7 @@ class NativeVideoViewController(
   
     override fun onResume(owner: LifecycleOwner) {
         super.onResume(owner)
+        Log.d("NativeVideoViewController", "onResume" )
         if (disposed) return
         if (playerState == PlayerState.NOT_INITIALIZED && mediaPlayer != null) {
             try {
@@ -140,29 +141,34 @@ class NativeVideoViewController(
         }
      }
     override fun onCreate(owner: LifecycleOwner) {
+        Log.d("NativeVideoViewController", "Create" )
         super.onCreate(owner)
         this.configurePlayer()
     }
 
     override fun onPause(owner: LifecycleOwner) {
+        Log.d("NativeVideoViewController", "onPause" )
         super.onPause(owner)
         if (disposed) return
         this.pausePlayback()
     }
 
     override fun onStop(owner: LifecycleOwner) {
+        Log.d("NativeVideoViewController", "onStop" )
         super.onStop(owner)
         if (disposed) return
         this.stopPlayback()
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
+        Log.d("NativeVideoViewController", "onDestroy" )
         super.onDestroy(owner)
         if (disposed) return
         this.destroyVideoView()
     }
 
     private fun configurePlayer() {
+        
         videoView = constraintLayout.findViewById(R.id.native_video_view)
         videoView?.setOnPreparedListener(this)
         videoView?.setOnErrorListener(this)
