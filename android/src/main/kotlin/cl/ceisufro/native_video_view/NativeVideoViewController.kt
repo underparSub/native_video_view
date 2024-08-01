@@ -181,6 +181,8 @@ class NativeVideoViewController(
         if (requestAudioFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             videoView?.setAudioFocusRequest(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
         }
+        videoView?.setBackgroundColor(Color.TRANSPARENT)
+
     }
   
 
