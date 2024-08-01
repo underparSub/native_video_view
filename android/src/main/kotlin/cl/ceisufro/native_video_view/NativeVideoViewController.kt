@@ -1,5 +1,5 @@
 package cl.ceisufro.native_video_view
-
+import android.graphics.Color
 import android.content.Context
 import android.media.AudioManager
 import android.media.MediaPlayer
