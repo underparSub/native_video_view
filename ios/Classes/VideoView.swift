@@ -155,7 +155,7 @@ class VideoView : UIView {
     
     private func configureVideoLayer() {
         guard playerLayer == nil else { return } // 이미 있으면 설정하지 않음
-        self.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+        self.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
         playerLayer = AVPlayerLayer(player: player)
         playerLayer?.frame = bounds
         playerLayer?.videoGravity = .resizeAspect
