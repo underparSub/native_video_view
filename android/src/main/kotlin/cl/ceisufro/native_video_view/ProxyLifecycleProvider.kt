@@ -13,6 +13,9 @@ class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycle
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
     private val registrarActivityHashCode: Int = activity.hashCode()
 
+    override val lifecycle: Lifecycle
+        get() = lifecycleRegistry
+
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.hashCode() != registrarActivityHashCode) {
             return
@@ -56,10 +59,6 @@ class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycle
         }
         activity.application.unregisterActivityLifecycleCallbacks(this)
         lifecycleRegistry.handleLifecycleEvent(Event.ON_DESTROY)
-    }
-
-    override fun getLifecycle(): Lifecycle {
-        return lifecycleRegistry
     }
 
     init {
