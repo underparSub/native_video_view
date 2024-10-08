@@ -7,14 +7,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Lifecycle.Event
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-
 class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycleCallbacks,
     LifecycleOwner, LifecycleProvider {
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
     private val registrarActivityHashCode: Int = activity.hashCode()
 
+    // LifecycleOwner의 추상 속성 구현
     override val lifecycle: Lifecycle
         get() = lifecycleRegistry
+
+    // getLifecycle() 메서드 유지
+    override fun getLifecycle(): Lifecycle {
+        return lifecycleRegistry
+    }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.hashCode() != registrarActivityHashCode) {
