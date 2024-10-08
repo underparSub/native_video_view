@@ -58,7 +58,7 @@ class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycle
         lifecycle.handleLifecycleEvent(Event.ON_DESTROY)
     }
 
-    override fun getLifecycle(): Lifecycle {
+    override public fun getLifecycle(): Lifecycle {
         return lifecycle
     }
 
