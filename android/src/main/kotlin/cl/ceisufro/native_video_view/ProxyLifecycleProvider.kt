@@ -7,50 +7,45 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Lifecycle.Event
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+
 class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycleCallbacks,
-    LifecycleProvider {
-
-    private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
+        LifecycleOwner, LifecycleProvider {
+     override val lifecycle: LifecycleRegistry = LifecycleRegistry(this)
     private val registrarActivityHashCode: Int = activity.hashCode()
-
-    // LifecycleProvider의 추상 메서드 구현
-    override fun getLifecycle(): Lifecycle? {
-        return lifecycleRegistry
-    }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.hashCode() != registrarActivityHashCode) {
             return
         }
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycle.handleLifecycleEvent(Event.ON_CREATE)
     }
 
     override fun onActivityStarted(activity: Activity) {
         if (activity.hashCode() != registrarActivityHashCode) {
             return
         }
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        lifecycle.handleLifecycleEvent(Event.ON_START)
     }
 
     override fun onActivityResumed(activity: Activity) {
         if (activity.hashCode() != registrarActivityHashCode) {
             return
         }
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        lifecycle.handleLifecycleEvent(Event.ON_RESUME)
     }
 
     override fun onActivityPaused(activity: Activity) {
         if (activity.hashCode() != registrarActivityHashCode) {
             return
         }
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+        lifecycle.handleLifecycleEvent(Event.ON_PAUSE)
     }
 
     override fun onActivityStopped(activity: Activity) {
         if (activity.hashCode() != registrarActivityHashCode) {
             return
         }
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        lifecycle.handleLifecycleEvent(Event.ON_STOP)
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, bundle: Bundle) {}
@@ -60,7 +55,11 @@ class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycle
             return
         }
         activity.application.unregisterActivityLifecycleCallbacks(this)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        lifecycle.handleLifecycleEvent(Event.ON_DESTROY)
+    }
+
+    override fun getLifecycle(): Lifecycle {
+        return lifecycle
     }
 
     init {
