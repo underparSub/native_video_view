@@ -17,9 +17,9 @@ class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycle
         get() = lifecycleRegistry
 
     // getLifecycle() 메서드 유지
-    override fun getLifecycle(): Lifecycle {
-        return lifecycleRegistry
-    }
+    // override fun getLifecycle(): Lifecycle {
+    //     return lifecycleRegistry
+    // }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.hashCode() != registrarActivityHashCode) {
