@@ -9,8 +9,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 
 class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycleCallbacks,
-    LifecycleOwner, LifecycleProvider {
-    private val lifecycle: LifecycleRegistry = LifecycleRegistry(this)
+        LifecycleOwner {
+    override val lifecycle: LifecycleRegistry = LifecycleRegistry(this)
     private val registrarActivityHashCode: Int = activity.hashCode()
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
