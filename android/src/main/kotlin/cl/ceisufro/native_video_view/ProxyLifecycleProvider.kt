@@ -17,10 +17,7 @@ class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycle
     override val lifecycle: Lifecycle
         get() = lifecycleRegistry
 
-    // LifecycleProvider의 추상 메서드 구현
-    override fun getLifecycle(): Lifecycle? {
-        return lifecycleRegistry
-    }
+    // LifecycleProvider의 getLifecycle() 메서드 제거
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.hashCode() != registrarActivityHashCode) {
