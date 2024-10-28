@@ -62,7 +62,7 @@ class ProxyLifecycleProvider(activity: Activity) : Application.ActivityLifecycle
     //     return lifecycle
     // }
 
-    override fun getLife(): Lifecycle {
+    override fun getLife(): Lifecycle? {
         return lifecycle
     }
 
