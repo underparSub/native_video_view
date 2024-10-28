@@ -46,10 +46,10 @@ class NativeVideoViewController(
 
     init {
         this.methodChannel.setMethodCallHandler(this)
-        this.lifeCycleHashcode = lifecycleProvider.getLifecycle().hashCode()
+        this.lifeCycleHashcode = lifecycleProvider.getLife().hashCode()
         this.constraintLayout = LayoutInflater.from(context)
             .inflate(R.layout.video_layout, null) as ConstraintLayout
-        lifecycleProvider.getLifecycle()!!.addObserver(this)
+        lifecycleProvider.getLife()!!.addObserver(this)
     }
 
     override fun getView(): View {
@@ -61,7 +61,7 @@ class NativeVideoViewController(
         disposed = true
         methodChannel.setMethodCallHandler(null)
         this.destroyVideoView()
-        lifecycleProvider.getLifecycle()!!.removeObserver(this)
+        lifecycleProvider.getLife()!!.removeObserver(this)
         Log.d("NVV#NativeView", "Disposed view $id")
     }
 
