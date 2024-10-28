@@ -48,7 +48,7 @@ class ExoPlayerController(
 
     init {
         this.methodChannel.setMethodCallHandler(this)
-        this.lifeCycleHashcode = lifecycleProvider.getLifecycle().hashCode()
+        this.lifeCycleHashcode = lifecycleProvider.getLife().hashCode()
         this.constraintLayout = LayoutInflater.from(context)
             .inflate(R.layout.exoplayer_layout, null) as ConstraintLayout
         this.surfaceView = constraintLayout.findViewById(R.id.exo_player_surface_view)
@@ -56,7 +56,7 @@ class ExoPlayerController(
         this.exoPlayer = ExoPlayer.Builder(context)
             .setTrackSelector(trackSelector)
             .build()
-        lifecycleProvider.getLifecycle()!!.addObserver(this)
+        lifecycleProvider.getLife()!!.addObserver(this)
     }
 
     override fun getView(): View {
@@ -68,7 +68,7 @@ class ExoPlayerController(
         disposed = true
         methodChannel.setMethodCallHandler(null)
         this.destroyVideoView()
-        lifecycleProvider.getLifecycle()!!.removeObserver(this)
+        lifecycleProvider.getLife()!!.removeObserver(this)
         Log.d("NVV#ExoPlayer", "Disposed view $id")
     }
 
