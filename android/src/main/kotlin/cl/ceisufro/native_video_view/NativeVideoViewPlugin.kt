@@ -28,7 +28,7 @@ class NativeVideoViewPlugin : FlutterPlugin, ActivityAware {
                         NativeVideoViewFactory(
                             registrar.messenger(),
                             object : LifecycleProvider {
-                                override fun getLifecycle(): Lifecycle {
+                                override fun getLife(): Lifecycle {
                                     return (activity as LifecycleOwner).lifecycle
                                 }
                             })
@@ -55,7 +55,7 @@ class NativeVideoViewPlugin : FlutterPlugin, ActivityAware {
                 NativeVideoViewFactory(
                     binding.binaryMessenger,
                     object : LifecycleProvider {
-                        override fun getLifecycle(): Lifecycle? {
+                        override fun getLife(): Lifecycle? {
                             return lifecycle
                         }
                     })
