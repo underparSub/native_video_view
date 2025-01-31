@@ -211,6 +211,11 @@ class VideoView : UIView {
             self.videoTransform = getImageOrientation(from: uri!)
             player?.replaceCurrentItem(with: AVPlayerItem(asset: asset))
             self.playerItem = player?.currentItem
+            let videoComposition = AVMutableVideoComposition(propertiesOf: asset)
+            videoComposition.colorPrimaries = AVVideoColorPrimaries_ITU_R_709_2
+            videoComposition.colorTransferFunction = AVVideoTransferFunction_ITU_R_709_2
+            videoComposition.colorYCbCrMatrix = AVVideoYCbCrMatrix_ITU_R_709_2
+            playerItem?.videoComposition = videoComposition
             let pixelBufferAttributes: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
             self.videoOutput = AVPlayerItemVideoOutput(pixelBufferAttributes: pixelBufferAttributes)
             self.playerItem?.add(videoOutput!)
