@@ -31,6 +31,8 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
     defaultConfig {
+        
+        namespace("native_video_view")
         minSdkVersion 26
     }
     lintOptions {
