@@ -32,7 +32,7 @@ android {
     }
     defaultConfig {
         
-        namespace("native_video_view")
+        namespace("l.ceisufro.native_video_view")
         minSdkVersion 26
     }
     lintOptions {
