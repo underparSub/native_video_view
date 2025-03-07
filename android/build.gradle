@@ -25,6 +25,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
+    namespace "cl.ceisufro.native_video_view" 
+
     compileSdkVersion 31
 
     sourceSets {
@@ -32,7 +34,7 @@ android {
     }
     defaultConfig {
         
-        namespace("l.ceisufro.native_video_view")
+        
         minSdkVersion 26
     }
     lintOptions {
